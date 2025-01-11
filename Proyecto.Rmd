@@ -1,0 +1,561 @@
+---
+title: "Proyecto AED: Análisis de la Calidad de Vida en España"
+author: "Daniela Meriño, Victor Mateu, Antonio Nova"
+date: "2024-12-31"
+output: html_document
+---
+
+## Introducción
+
+La calidad de vida es un concepto multidimensional que abarca aspectos económicos, sociales, ambientales y subjetivos, reflejando el bienestar general de las personas en una sociedad. En este trabajo, analizaremos la calidad de vida en España, desglosada en diversas dimensiones, a lo largo de varias comunidades autónomas y un periodo de años.
+
+El análisis se centra en múltiples dimensiones de la calidad de vida, como las condiciones materiales, la salud, la educación, el trabajo, las relaciones sociales, la seguridad, el entorno ambiental y la gobernanza, entre otras. Estas dimensiones se han seleccionado por su capacidad para capturar de manera integral los factores que influyen en el bienestar de las personas y las comunidades. Además, el enfoque temporal del análisis nos permitirá evaluar tendencias, identificar patrones y observar disparidades entre las diferentes comunidades autónomas.
+
+Los datos utilizados para este estudio provienen de un conjunto estructurado que organiza información clave de calidad de vida por año, comunidad autónoma y dimensión. Este formato permitirá realizar comparaciones interregionales y temporales, utilizando herramientas estadísticas y visualizaciones avanzadas para descubrir las relaciones y diferencias significativas entre las regiones de España.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+#librerias utilizadas:
+library(tidyverse)
+library(factoextra)
+library(dendextend)
+library(sf)
+library(reshape2)
+library(ggcorrplot)
+```
+
+## Importación y Ordenación de los datos 
+
+En este apartado, se procede a la importación y preparación de los datos proporcionados por el Instituto Nacional de Estadística (INE) de España. Los datos corresponden al [**Indicador Multidimensional de Calidad de Vida (IMCV)**](https://ine.es/experimental/imcv/experimental_ind_multi_calidad_vida.htm). Este indicador tiene como objetivo ofrecer una visión integral del bienestar en las distintas comunidades autónomas mediante la evaluación de múltiples dimensiones, como salud, educación, trabajo, entre otras.
+
+La naturaleza experimental de estos datos implica que están en proceso de consolidación metodológica y pueden incluir innovaciones en las fuentes de información. En este sentido, el primer paso es garantizar que los datos se encuentren correctamente estructurados y listos para su análisis.
+
+En primer lugar, destacar que de este conjunto de datos utilizada tiene un número muy elevado de variables por lo que nosotros nos centraremos en los resultados globales de cada dimensión por comunidad autónoma por año.
+
+Aunque, para enteder un poco mejor de cómo se han obtenido los datos del conjunto que vamos a analizar, destacar que el cálculo del **Indicador Multidimensional de Calidad de Vida (IMCV)** se basa en la selección de indicadores representativos de nueve dimensiones clave, como condiciones materiales de vida, salud, educación y trabajo, obtenidos de fuentes estadísticas como la Encuesta de Condiciones de Vida. Los valores de cada indicador se normalizan para permitir comparaciones homogéneas mediante el método Mazziotta-Pareto Ajustado (AMPI), que reescala los datos en un rango común y penaliza la variabilidad excesiva. Posteriormente, se agregan los valores normalizados de cada dimensión en un índice representativo, y finalmente, los índices de todas las dimensiones se combinan en un único valor global mediante una media ponderada. El resultado permite analizar la evolución temporal y las diferencias territoriales en la calidad de vida en España.
+
+
+```{r, include=FALSE}
+# Código en R para organizar los datos en formato tidy
+
+# Cargar librerías necesarias
+library(dplyr)
+library(tidyr)
+library(readxl)
+
+# Cargar los datos desde el archivo
+ruta_excel <- "data/datos_calidad_vida_multi (1).xlsx"
+data <- read_excel(ruta_excel, sheet = "AMPI Global", range = "A4:Z23")  # Ajusta el rango si es necesario
+
+
+# Limpiar los nombres de las columnas y convertir valores numéricos
+colnames(data) <- gsub("\\.+", "", colnames(data))
+
+# Sustituir comas por puntos en los valores numéricos y convertir a numeric
+data[-1] <- lapply(data[-1], function(x) as.numeric(gsub(",", ".", x)))
+
+colnames(data)[-1] <- paste0(rep(seq(2008, 2022), each = 9), ".dim", rep(1:9, times = length(seq(2008, 2022))))
+
+#ormato tidy
+data_tidy <- data %>%
+  pivot_longer(
+    cols = -Total,
+    names_to = c("Anio", "Dim"),
+    names_sep = "\\.",
+    values_to = "Valor"
+  ) %>%
+  rename(CCAA = Total) %>%
+  mutate(Anio = as.integer(Anio))
+
+# Guardar el archivo
+write.csv(data_tidy, "Datos_Tidy.csv", row.names = FALSE)
+
+## Con esto ordenamos los datos ordenados
+
+```
+Una vez tenemos una idea básica sobre el dataset que vamos a analizar, nos centraremos en la importación y ordenación de este. 
+
+El fichero descargardo a través del INE se obtuvo en formato .xlsx, por lo que la importación se tuvo que realizar a través de la función _read_excel_ de la librería _readxl_. Se creo un código en R de manera que cumpla las conciones de un conjunto de datos considerado _tidy_. Esto requiere que cada variable está representada en una columna, cada observación de una variable está en una fila distinta, la primera fila incluye los nombres de las variables y los nombres deben ser representativos de las variables que almacenan. 
+
+```{r, echo=FALSE}
+data <- read.csv("Datos_Tidy.csv") #la importación funciona bien
+
+head(data)
+```
+
+## Análisis de los datos
+
+El análisis de datos es un proceso fundamental para extraer información relevante, identificar patrones y apoyar la toma de decisiones basada en evidencia. En este caso, los datos proporcionan información multidimensional que permite explorar la calidad de vida en diferentes comunidades autónomas a lo largo del tiempo. Este análisis combina técnicas descriptivas, como visualizaciones y resúmenes estadísticos, con enfoques más avanzados, como modelos estadísticos y exploraciones multivariantes. 
+
+Notamos que no hay valores faltantes en el conjunto de datos, hablar de gobernanza
+
+```{r, include=FALSE}
+sum(!(is.finite(data$Anio)))
+sum(!(is.finite(data$Valor)))
+```
+
+```{r, include=FALSE}
+library(ggplot2)
+#Importación del csv ordenado
+data <- read.csv("Datos_Tidy.csv") #la importación funciona bien
+```
+
+```{r, include=FALSE}
+dim_all <- data %>%
+  filter(Dim == "dim1")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r, include=FALSE}
+dim_all <- data %>%
+  filter(Dim == "dim2")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r, include=FALSE}
+dim_all <- data %>%
+  filter(Dim == "dim3")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r}
+dim_all <- data %>%
+  filter(Dim == "dim4")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r, echo=FALSE}
+dim_all <- data %>%
+  filter(Dim == "dim5")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+```{r}
+dim_all <- data %>%
+  filter(Dim == "dim6")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+
+```{r}
+dim_all <- data %>%
+  filter(Dim == "dim7")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r}
+dim_all <- data %>%
+  filter(Dim == "dim8")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r}
+dim_all <- data %>%
+  filter(Dim == "dim9")
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor) %>%
+  pivot_wider(names_from = Anio, values_from = Valor) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+fviz_nbclust(mat_dim, hcut, method = "wss")
+fviz_nbclust(mat_dim, hcut, method = "silhouette")
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)  # Ordenar primero por cluster y luego por CCAA
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Clustering de Entorno y Medioambiente",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+```
+
+```{r}
+dimensiones <- unique(data$Dim)
+
+for (dim in dimensiones) {
+  # Filtrar los datos para la dimensión actual
+  dim_all <- data %>%
+    filter(Dim == dim)
+  
+  # Crear el gráfico
+  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+  
+  # Guardar el gráfico en un archivo
+  ggsave(
+    filename = paste0("grafico_", dim, ".png"),
+    plot = plot,
+    width = 10,
+    height = 6
+  )
+  
+  # Mostrar el gráfico
+  print(plot) #hola
+}
+```
+
+
+## matriz de correlacion 
+```{r}
+
+# Cargar librerías
+library(dplyr)
+library(reshape2)
+library(ggcorrplot)
+
+# Cargar los datos
+data <- read.csv("Datos_Tidy.csv")
+
+# Obtener lista de CCAA únicas
+ccaa_list <- unique(data$CCAA)
+
+# Crear un bucle para calcular y guardar las matrices de correlación
+for (ccaa in ccaa_list) {
+  # Filtrar los datos para la CCAA actual
+  ccaa_data <- data %>%
+    filter(CCAA == ccaa)
+  
+  # Reorganizar los datos en formato ancho (dimensiones como columnas)
+  ccaa_wide <- ccaa_data %>%
+    select(Anio, Dim, Valor) %>%
+    spread(key = Dim, value = Valor)
+  
+  # Calcular la matriz de correlación
+  cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs")
+  
+  # Crear el gráfico de la matriz de correlación
+  plot <- ggcorrplot(cor_matrix, 
+                     method = "circle", 
+                     type = "lower",
+                     lab = TRUE, 
+                     lab_size = 3, 
+                     colors = c("red", "white", "blue"),
+                     title = paste("Matriz de Correlación -", ccaa),
+                     tl.cex = 10, 
+                     tl.srt = 45)
+  
+  # Guardar el gráfico en un archivo
+  ggsave(filename = paste0("matriz_correlacion_", ccaa, ".png"), 
+         plot = plot, 
+         width = 8, 
+         height = 6)
+  
+  # Mostrar un mensaje de progreso
+  print(paste("Matriz de correlación para", ccaa, "guardada."))
+}
+
+
+```
+
