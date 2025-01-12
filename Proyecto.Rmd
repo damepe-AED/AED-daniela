@@ -103,8 +103,7 @@ El análisis de datos es un proceso fundamental para extraer información releva
 
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
-Dado el volumen de datos disponibles, procedemos a simplificar el análisis calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante. Una vez calculados los valores globales, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
-
+Dado el volumen de datos disponibles, procedemos a simplificar el análisis calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante.
 
 ```{r, include = FALSE}
 dimensiones <- unique(data$Dim)
@@ -222,7 +221,7 @@ print(plot)
 
 En la gráfica anterior se puede observar el Valor Global de Calidad de Vida en las diferenetes comunidades de España a lo largo del tiempo. Comunidades como el País Vasco y Navarra destacan con valores considerablemente más altos, mientras que Ceuta presenta valores más bajos, reflejando disparidades en la calidad de vida. Aunque la mayoría de las regiones muestran una tendencia al alza, especialmente después de 2015, algunas experimentan fluctuaciones o estancamientos recientes. 
 
-
+Una vez calculados los valores globales, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
 
 ```{r}
