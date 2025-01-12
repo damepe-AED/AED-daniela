@@ -261,12 +261,20 @@ dim_all <- dim_all %>%
 dim_all <- dim_all %>%
   arrange(Cluster, CCAA)
 
+dim_all <- dim_all %>%
+  mutate(Cluster = case_when(
+    Cluster == 1 ~ "Clase baja",
+    Cluster == 2 ~ "Clase alta",
+    Cluster == 3 ~ "Clase media",
+    TRUE ~ as.character(Cluster)  # Mantener los valores originales
+  ))
+
 # Graficar los resultados del clustering
 plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor_Global, color = factor(Cluster), group = CCAA)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
   labs(
-    title = "Clustering de Entorno y Medioambiente",
+    title = "Clustering de Calidad de Vida Global",
     x = "Año",
     y = "Valor",
     color = "Cluster",
