@@ -3,9 +3,9 @@ title: 'Proyecto AED: Análisis de la Calidad de Vida en España'
 author: "Daniela Meriño, Victor Mateu, Antonio Nova"
 date: "2024-12-31"
 output:
-  pdf_document: default
-  html_document: default
   
+  html_document: default
+  pdf_document: default
 ---
 
 ## Introducción
@@ -253,7 +253,7 @@ library(ggplot2)
 data <- read.csv("Datos_Tidy.csv") #la importación funciona bien
 ```
 
-```{r, include=FALSE}
+```{r, include=FALSE,fig.width=5, fig.height=5}
 #Valor global por CCAA
 data_reducido <- data %>%
   group_by(CCAA, Anio) %>%
