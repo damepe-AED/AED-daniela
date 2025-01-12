@@ -29,6 +29,7 @@ library(factoextra)
 library(dendextend)
 library(dplyr)
 library(tidyr)
+library(tinytex)
 library(readxl)
 library(bookdown)
 library(sf)
@@ -106,7 +107,7 @@ El análisis de datos es un proceso fundamental para extraer información releva
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
 En primer lugar, vamos a analizar la relación de las diferentes dimensiones para cada comunidad autónoma. Esto se realiza calculando la matriz de correlación, a partir del método de Spearman, esta indicará una medida de cuán asociadas están las dimensiones.
-En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comunidad Valenciana, pero esta se realizó para todas las comunidades, se pueden ver en \@ref(sec-anexo).
+En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comunidad Valenciana, pero esta se realizó para todas las comunidades, se pueden ver en el Anexo, al final del documento.
 
 
 ```{r, echo=FALSE,fig.width=5, fig.height=5}
@@ -144,7 +145,7 @@ ccaa <- "Comunitat Valenciana"
 
 ```
 
-
+El análisis de las correlaciones entre dimensiones en todas las comunidades autónomas revela que las Condiciones Materiales de Vida, el Trabajo y la Educación son las dimensiones más interrelacionadas, formando el núcleo del bienestar socioeconómico. Estas tres dimensiones están particularmente conectadas en regiones como Navarra, País Vasco y Madrid, que presentan sistemas más integrados. Por otro lado, dimensiones como el Entorno y Medioambiente y el Ocio y Relaciones Sociales tienden a ser más independientes, con menor conexión con factores económicos, aunque en algunas comunidades, como la Comunitat Valenciana y Melilla, muestran una relación moderada con la seguridad. La Experiencia General de la Vida está influenciada principalmente por las condiciones materiales y el empleo, aunque su alcance es más amplio en regiones con mayor desarrollo social. Finalmente, en comunidades como Melilla, Ceuta y Extremadura, las dimensiones muestran una mayor independencia, reflejando realidades locales más desconectadas entre sí. Este panorama resalta cómo el bienestar general varía significativamente según el contexto regional.
 
 Dado el volumen de datos disponibles, procedemos a simplificar el análisis calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante.
 
@@ -362,7 +363,7 @@ print(plot)
 
 ### Matriz de correlación de Spearman entre dimensiones por CCAA
 
-```{r, echo=FALSE}
+```{r, include=FALSE}
 
 # Obtener lista de CCAA únicas
 ccaa_list <- unique(data$CCAA)
