@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
+rm(list=ls())
 #librerias utilizadas:
 library(tidyverse)
 library(factoextra)
@@ -38,9 +39,7 @@ En primer lugar, destacar que de este conjunto de datos utilizada tiene un núme
 
 Aunque, para enteder un poco mejor de cómo se han obtenido los datos del conjunto que vamos a analizar, destacar que el cálculo del **Indicador Multidimensional de Calidad de Vida (IMCV)** se basa en la selección de indicadores representativos de nueve dimensiones clave, como condiciones materiales de vida, salud, educación y trabajo, obtenidos de fuentes estadísticas como la Encuesta de Condiciones de Vida. Los valores de cada indicador se normalizan para permitir comparaciones homogéneas mediante el método Mazziotta-Pareto Ajustado (AMPI), que reescala los datos en un rango común y penaliza la variabilidad excesiva. Posteriormente, se agregan los valores normalizados de cada dimensión en un índice representativo, y finalmente, los índices de todas las dimensiones se combinan en un único valor global mediante una media ponderada. El resultado permite analizar la evolución temporal y las diferencias territoriales en la calidad de vida en España.
 
-
-```{r, include=FALSE}
-# Código en R para organizar los datos en formato tidy
+```{r}
 
 # Cargar librerías necesarias
 library(dplyr)
@@ -48,19 +47,25 @@ library(tidyr)
 library(readxl)
 
 # Cargar los datos desde el archivo
-ruta_excel <- "data/datos_calidad_vida_multi (1).xlsx"
-data <- read_excel(ruta_excel, sheet = "AMPI Global", range = "A4:Z23")  # Ajusta el rango si es necesario
+file_path <- "data/datos_calidad_vida_multi.xlsx"
+data <- read_excel(file_path, sheet = "AMPI Global", range = "A4:EO23")
 
-
-# Limpiar los nombres de las columnas y convertir valores numéricos
+# Limpiar los nombres de las columnas
 colnames(data) <- gsub("\\.+", "", colnames(data))
 
 # Sustituir comas por puntos en los valores numéricos y convertir a numeric
-data[-1] <- lapply(data[-1], function(x) as.numeric(gsub(",", ".", x)))
+data[-1] <- lapply(data[-1], function(x) as.numeric(gsub(",", ".", as.character(x))))
 
-colnames(data)[-1] <- paste0(rep(seq(2008, 2022), each = 9), ".dim", rep(1:9, times = length(seq(2008, 2022))))
+# Corregir la asignación de nombres de columnas
+# Número de dimensiones y años
+num_dim <- 9  # Número de dimensiones por año
+num_anios <- (ncol(data) - 1) / num_dim  # Calcular el número de años
+anios <- seq(2008, 2008 + num_anios - 1)  # Generar la secuencia de años
 
-#ormato tidy
+# Crear nombres de columnas combinando años y dimensiones
+colnames(data)[-1] <- paste0(rep(anios, each = num_dim), ".dim", rep(1:num_dim, times = length(anios)))
+
+# Convertir a formato tidy
 data_tidy <- data %>%
   pivot_longer(
     cols = -Total,
@@ -68,22 +73,25 @@ data_tidy <- data %>%
     names_sep = "\\.",
     values_to = "Valor"
   ) %>%
-  rename(CCAA = Total) %>%
-  mutate(Anio = as.integer(Anio))
+  rename(CCAA = Total) %>%  # Renombrar la columna 'Total' a 'CCAA'
+  mutate(
+    Anio = as.integer(Anio),  # Convertir años a entero
+    Valor = as.numeric(Valor)  # Asegurar que los valores sean numéricos
+  )
 
-# Guardar el archivo
+# Guardar el archivo tidy como CSV
 write.csv(data_tidy, "Datos_Tidy.csv", row.names = FALSE)
 
-## Con esto ordenamos los datos ordenados
-
 ```
+
+
+
 Una vez tenemos una idea básica sobre el dataset que vamos a analizar, nos centraremos en la importación y ordenación de este. 
 
 El fichero descargardo a través del INE se obtuvo en formato .xlsx, por lo que la importación se tuvo que realizar a través de la función _read_excel_ de la librería _readxl_. Se creo un código en R de manera que cumpla las conciones de un conjunto de datos considerado _tidy_. Esto requiere que cada variable está representada en una columna, cada observación de una variable está en una fila distinta, la primera fila incluye los nombres de las variables y los nombres deben ser representativos de las variables que almacenan. 
 
 ```{r, echo=FALSE}
 data <- read.csv("Datos_Tidy.csv") #la importación funciona bien
-
 head(data)
 ```
 
@@ -502,7 +510,7 @@ for (dim in dimensiones) {
   )
   
   # Mostrar el gráfico
-  print(plot) #hola
+  print(plot) 
 }
 ```
 
