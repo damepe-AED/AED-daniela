@@ -103,6 +103,9 @@ El análisis de datos es un proceso fundamental para extraer información releva
 
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
+Dado el volumen de datos disponibles, procedemos a simplificar el análisis calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante. Una vez calculados los valores globales, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la esencia de la información para identificar patrones y realizar comparaciones significativas.
+
+
 ```{r, include = FALSE}
 dimensiones <- unique(data$Dim)
 
@@ -134,7 +137,7 @@ sum(!(is.finite(data$Anio)))
 sum(!(is.finite(data$Valor)))
 ```
 
-```{r, echo=FALSE}
+```{r, include=FALSE}
 # Cargar librerías necesarias
 library(dplyr)
 library(ggplot2)
@@ -181,15 +184,7 @@ for (dim in dimensiones) {
   # Agregar el gráfico a la lista
   plots[[dim]] <- plot
   i<-i+1
-}
-
-# Mostrar las gráficas de dos en dos
-for (i in seq(1, length(plots), by = 2)) {
-  grid.arrange(
-    plots[[i]],
-    if ((i + 1) <= length(plots)) plots[[i + 1]] else NULL,
-    ncol = 2
-  )
+  print(plot)
 }
 
 ```
@@ -201,7 +196,33 @@ library(ggplot2)
 data <- read.csv("Datos_Tidy.csv") #la importación funciona bien
 ```
 
+```{r, include=FALSE}
+#Valor global por CCAA
+data_reducido <- data %>%
+  group_by(CCAA, Anio) %>%
+  summarise(Valor_Global = mean(Valor))
+
+```
+
 ```{r, echo=FALSE}
+
+plot <- ggplot(data_reducido, aes(x = Anio, y = Valor_Global, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Valor Global de Calidad de Vida",
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+print(plot)
+```
+
+
+
+```{r, include=FALSE}
 dim_all <- data %>%
   filter(Dim == "dim1")
 
