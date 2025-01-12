@@ -1,8 +1,10 @@
 ---
-title: "Proyecto AED: Análisis de la Calidad de Vida en España"
+title: 'Proyecto AED: Análisis de la Calidad de Vida en España'
 author: "Daniela Meriño, Victor Mateu, Antonio Nova"
 date: "2024-12-31"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ## Introducción
@@ -41,7 +43,7 @@ En primer lugar, destacar que de este conjunto de datos utilizada tiene un núme
 
 Aunque, para enteder un poco mejor de cómo se han obtenido los datos del conjunto que vamos a analizar, destacar que el cálculo del **Indicador Multidimensional de Calidad de Vida (IMCV)** se basa en la selección de indicadores representativos de nueve dimensiones clave, como condiciones materiales de vida, salud, educación y trabajo, obtenidos de fuentes estadísticas como la Encuesta de Condiciones de Vida. Los valores de cada indicador se normalizan para permitir comparaciones homogéneas mediante el método Mazziotta-Pareto Ajustado (AMPI), que reescala los datos en un rango común y penaliza la variabilidad excesiva. Posteriormente, se agregan los valores normalizados de cada dimensión en un índice representativo, y finalmente, los índices de todas las dimensiones se combinan en un único valor global mediante una media ponderada. El resultado permite analizar la evolución temporal y las diferencias territoriales en la calidad de vida en España.
 
-```{r}
+```{r, include=FALSE}
 
 # Cargar librerías necesarias
 library(dplyr)
@@ -101,11 +103,97 @@ El análisis de datos es un proceso fundamental para extraer información releva
 
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
+```{r, include = FALSE}
+dimensiones <- unique(data$Dim)
+
+for (dim in dimensiones) {
+  # Filtrar los datos para la dimensión actual
+  dim_all <- data %>%
+    filter(Dim == dim)
+  
+  # Crear el gráfico
+  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+  
+  # Mostrar el gráfico
+  print(plot) 
+}
+```
+
 
 ```{r, include=FALSE}
 sum(!(is.finite(data$Anio)))
 sum(!(is.finite(data$Valor)))
 ```
+
+```{r, echo=FALSE}
+# Cargar librerías necesarias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Obtener las dimensiones únicas
+dimensiones <- unique(data$Dim)
+
+nombre <- c(
+  "Condiciones Materiales de Vida",
+  "Trabajo",
+  "Salud",
+  "Educación",
+  "Ocio y Relaciones Sociales",
+  "Seguridad Física y Personal",
+  "Gobernanza y Derechos Básicos",
+  "Entorno y Medioambiente",
+  "Experiencia General de la Vida"
+)
+
+# Lista para almacenar gráficos temporalmente
+plots <- list()
+i<-1
+# Crear gráficos y almacenarlos en la lista
+for (dim in dimensiones) {
+  # Filtrar los datos para la dimensión actual
+  dim_all <- data %>%
+    filter(Dim == dim)
+  
+  # Crear el gráfico
+  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = nombre[i],
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+    #theme(legend.position = "none")  # Quitar la leyenda
+  
+  # Agregar el gráfico a la lista
+  plots[[dim]] <- plot
+  i<-i+1
+}
+
+# Mostrar las gráficas de dos en dos
+for (i in seq(1, length(plots), by = 2)) {
+  grid.arrange(
+    plots[[i]],
+    if ((i + 1) <= length(plots)) plots[[i + 1]] else NULL,
+    ncol = 2
+  )
+}
+
+```
+
 
 ```{r, include=FALSE}
 library(ggplot2)
@@ -480,39 +568,6 @@ plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor, color = factor(Cluster)
   theme_minimal()
 
 print(plot_cluster)
-```
-
-```{r}
-dimensiones <- unique(data$Dim)
-
-for (dim in dimensiones) {
-  # Filtrar los datos para la dimensión actual
-  dim_all <- data %>%
-    filter(Dim == dim)
-  
-  # Crear el gráfico
-  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(
-      x = "Año",
-      y = "Valor",
-      color = "CCAA",
-      caption = "Fuente: Datos de Calidad de Vida"
-    ) +
-    theme_minimal()
-  
-  # Guardar el gráfico en un archivo
-  ggsave(
-    filename = paste0("grafico_", dim, ".png"),
-    plot = plot,
-    width = 10,
-    height = 6
-  )
-  
-  # Mostrar el gráfico
-  print(plot) 
-}
 ```
 
 
