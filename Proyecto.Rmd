@@ -166,7 +166,7 @@ print(plot)
 
 El análisis de las correlaciones entre dimensiones en todas las comunidades autónomas revela que las Condiciones Materiales de Vida, el Trabajo y la Educación son las dimensiones más interrelacionadas, formando el núcleo del bienestar socioeconómico. Estas tres dimensiones están particularmente conectadas en regiones como Navarra, País Vasco y Madrid, que presentan sistemas más integrados. Por otro lado, dimensiones como el Entorno y Medioambiente y el Ocio y Relaciones Sociales tienden a ser más independientes, con menor conexión con factores económicos, aunque en algunas comunidades, como la Comunitat Valenciana y Melilla, muestran una relación moderada con la seguridad. La Experiencia General de la Vida está influenciada principalmente por las condiciones materiales y el empleo, aunque su alcance es más amplio en regiones con mayor desarrollo social. Finalmente, en comunidades como Melilla, Ceuta y Extremadura, las dimensiones muestran una mayor independencia, reflejando realidades locales más desconectadas entre sí. Este panorama resalta cómo el bienestar general varía significativamente según el contexto regional.
 
-Dado el volumen de datos disponibles, procedemos a simplificar el análisis calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante.
+Siguiendo con el análisis, dado el volumen de datos disponibles, procedemos a simplificar el conjunto calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante.
 
 ```{r, include = FALSE}
 dimensiones <- unique(data$Dim)
@@ -277,7 +277,7 @@ plot <- ggplot(data_reducido, aes(x = Anio, y = Valor_Global, color = CCAA, grou
 print(plot)
 ```
 
-En la gráfica anterior se puede observar el Valor Global de Calidad de Vida en las diferenetes comunidades de España a lo largo del tiempo. Comunidades como el País Vasco y Navarra destacan con valores considerablemente más altos, mientras que Ceuta presenta valores más bajos, reflejando disparidades en la calidad de vida. Aunque la mayoría de las regiones muestran una tendencia al alza, especialmente después de 2015, algunas experimentan fluctuaciones o estancamientos recientes. 
+En la gráfica anterior se puede observar el Valor Global de Calidad de Vida en las diferenetes comunidades de España a lo largo del tiempo. Comunidades como el País Vasco y Navarra destacan con valores considerablemente más altos, mientras que Ceuta presenta valores claramente más bajos, reflejando disparidades en la calidad de vida. Aunque la mayoría de las regiones muestran una tendencia global al alza, especialmente después de 2015, algunas experimentan fluctuaciones o estancamientos recientes. 
 
 Una vez calculados los valores globales, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
@@ -344,6 +344,10 @@ print(plot_cluster)
 
 
 ```
+
+En la gráfica se muestra una clara diferencia entre las clases alta, media y baja si hablamos de calidad de vida global, con las comunidades de clase alta manteniéndose en niveles considerablemente superiores a lo largo del tiempo y manteniendose estables durante los años. Las comunidades de clase media también parecen constantes aunque a partir de 2010 parecen tener un decaimiento. Finalmente, la clase baja parece tener mayor variabilidad en sus valores con caídas notables alrededor de 2016. 
+HACER BOXPLOT DE CADA CLASE SE ME OCURRE
+
 
 Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
 
