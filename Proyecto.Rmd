@@ -26,8 +26,13 @@ rm(list=ls())
 library(tidyverse)
 library(factoextra)
 library(dendextend)
+library(dplyr)
+library(tidyr)
+library(readxl)
 library(sf)
+library(ggplot2)
 library(reshape2)
+library(gridExtra)
 library(ggcorrplot)
 ```
 
@@ -44,11 +49,6 @@ En primer lugar, destacar que de este conjunto de datos utilizada tiene un núme
 Aunque, para enteder un poco mejor de cómo se han obtenido los datos del conjunto que vamos a analizar, destacar que el cálculo del **Indicador Multidimensional de Calidad de Vida (IMCV)** se basa en la selección de indicadores representativos de nueve dimensiones clave, como condiciones materiales de vida, salud, educación y trabajo, obtenidos de fuentes estadísticas como la Encuesta de Condiciones de Vida. Los valores de cada indicador se normalizan para permitir comparaciones homogéneas mediante el método Mazziotta-Pareto Ajustado (AMPI), que reescala los datos en un rango común y penaliza la variabilidad excesiva. Posteriormente, se agregan los valores normalizados de cada dimensión en un índice representativo, y finalmente, los índices de todas las dimensiones se combinan en un único valor global mediante una media ponderada. El resultado permite analizar la evolución temporal y las diferencias territoriales en la calidad de vida en España.
 
 ```{r, include=FALSE}
-
-# Cargar librerías necesarias
-library(dplyr)
-library(tidyr)
-library(readxl)
 
 # Cargar los datos desde el archivo
 file_path <- "data/datos_calidad_vida_multi.xlsx"
@@ -137,12 +137,7 @@ sum(!(is.finite(data$Valor)))
 ```
 
 ```{r, include=FALSE}
-# Cargar librerías necesarias
-library(dplyr)
-library(ggplot2)
-library(gridExtra)
 
-# Obtener las dimensiones únicas
 dimensiones <- unique(data$Dim)
 
 nombre <- c(
@@ -224,7 +219,7 @@ En la gráfica anterior se puede observar el Valor Global de Calidad de Vida en 
 Una vez calculados los valores globales, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
 
-```{r}
+```{r, echo=FALSE}
 library(factoextra)
 
 # Filtrar el dataset para la dimensión deseada (por ejemplo, dim1)
@@ -287,6 +282,38 @@ print(plot_cluster)
 
 ```
 
+Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
+
+```{r, include =FALSE}
+#este chunk no sirve era para ver si en las diferentes dimensiones tambien se cumplen los clusteres que se cumplian para el valor global
+
+clases <- dim_all %>%
+  select(CCAA, Cluster) %>%
+  distinct()  # Evitar duplicados si hay múltiples años
+
+# Unir las clases al dataset `data`
+data <- data %>%
+  left_join(clases, by = "CCAA")
+
+
+prueba <- data %>%
+  filter(Dim == "dim1")
+
+# Graficar los resultados del clustering
+plot <- ggplot(prueba, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Dimensión 1",
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+print(plot)
+
+```
 
 
 
