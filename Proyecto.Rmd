@@ -111,37 +111,53 @@ En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comu
 
 
 ```{r, echo=FALSE,fig.width=5, fig.height=5}
+# Nombres reales de las dimensiones
+dim_names <- c(
+  "Condiciones Materiales de Vida",
+  "Trabajo",
+  "Salud",
+  "Educación",
+  "Ocio y Relaciones Sociales",
+  "Seguridad Física y Personal",
+  "Gobernanza y Derechos Básicos",
+  "Entorno y Medioambiente",
+  "Experiencia General de la Vida"
+)
 
 # Obtener lista de CCAA únicas
 ccaa <- "Comunitat Valenciana"
 
 # Crear un bucle para calcular y guardar las matrices de correlación
-  # Filtrar los datos para la CCAA actual
-  ccaa_data <- data %>%
-    filter(CCAA == ccaa)
-  
-  # Reorganizar los datos en formato ancho (dimensiones como columnas)
-  ccaa_wide <- ccaa_data %>%
-    select(Anio, Dim, Valor) %>%
-    spread(key = Dim, value = Valor)
-  
-  # Calcular la matriz de correlación
-  cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method="spearman")
-  
-  # Crear el gráfico de la matriz de correlación
-  plot <- ggcorrplot(cor_matrix, 
-                     method = "circle", 
-                     type = "lower",
-                     lab = TRUE, 
-                     lab_size = 3, 
-                     colors = c("red", "white", "blue"),
-                     title = paste("Matriz de Correlación -", ccaa),
-                     tl.cex = 10, 
-                     tl.srt = 45)
+# Filtrar los datos para la CCAA actual
+ccaa_data <- data %>%
+  filter(CCAA == ccaa)
 
-  
-  # Mostrar un mensaje de progreso
-  print(plot)
+# Reorganizar los datos en formato ancho (dimensiones como columnas)
+ccaa_wide <- ccaa_data %>%
+  select(Anio, Dim, Valor) %>%
+  spread(key = Dim, value = Valor)
+
+# Calcular la matriz de correlación
+cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method = "spearman")
+
+# Asignar los nombres reales a las filas y columnas de la matriz de correlación
+colnames(cor_matrix) <- dim_names
+rownames(cor_matrix) <- dim_names
+
+# Crear el gráfico de la matriz de correlación
+plot <- ggcorrplot(cor_matrix, 
+                   method = "circle", 
+                   type = "lower",
+                   lab = TRUE, 
+                   lab_size = 3, 
+                   colors = c("red", "white", "blue"),
+                   title = paste("Matriz de Correlación -", ccaa),
+                   tl.cex = 7, 
+                   tl.srt = 45)
+
+# Mostrar el gráfico
+print(plot)
+
 
 ```
 
