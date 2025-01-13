@@ -272,7 +272,7 @@ El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan
 
 Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 dim_all <- data_reducido
 
 mat_dim <- dim_all %>%
@@ -354,7 +354,7 @@ En la gráfica, se puede observar la recta de regresión ajustada a cada agrupac
 
 Finalmente, notamos que a penas hay solapamiento entre las agrupaciones a lo largo del tiempo, excepto en el último lustro. Este solapamiento cesa en el último año registrado. La clase alta presenta un crecimiento estable a lo largo del tiempo. La clase media presenta un crecimiento generalmente estable hasta 2017, donde experimenta un gran crecimiento relativo que se estanca decrece ligeramente posteriormente (a partir de 2019). La clase baja presenta un estancamiento genereal hasta 2015, donde experimenta un crecimiento general (que en algunos casos es superlativo), y posteriormente experimenta un decaimiento general (a partir de 2019).
 
-```{r}
+```{r, echo = FALSE}
 outlier_data <- dim_all %>%
   group_by(Anio, Cluster) %>%
   mutate(
@@ -367,73 +367,6 @@ outlier_data <- dim_all %>%
   ) %>%
   ungroup()
 
-plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
-  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_point(
-    data = outlier_data %>% filter(IsOutlier),
-    aes(color = Cluster),
-    size = 3,
-    position = position_jitter(width = 0.2)
-  ) +
-  labs(
-    title = "Boxplots con Outliers Coloreados por Clase",
-    x = "Año",
-    y = "Valor Global",
-    fill = "Clase (Boxplot)",
-    color = "Clase (Outliers)"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotar etiquetas del eje X
-  )
-
-print(plot_boxplot_outliers)
-```
-
-```{r}
-outlier_data <- dim_all %>%
-  group_by(Anio, Cluster) %>%
-  mutate(
-    Q1 = quantile(Valor_Global, 0.25),
-    Q3 = quantile(Valor_Global, 0.75),
-    IQR = Q3 - Q1,
-    Lower = Q1 - 1.5 * IQR,
-    Upper = Q3 + 1.5 * IQR,
-    IsOutlier = Valor_Global < Lower | Valor_Global > Upper
-  ) %>%
-  ungroup()
-
-plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
-  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_point(
-    data = outlier_data %>% filter(IsOutlier),
-    aes(color = Cluster),
-    size = 3,
-    position = position_jitter(width = 0.2)
-  ) +
-  geom_text(
-    data = outlier_data %>% filter(IsOutlier),
-    aes(label = CCAA),
-    position = position_jitter(width = 0.2, height = 0),
-    hjust = -0.2,
-    size = 3
-  ) +
-  labs(
-    title = "Boxplots con Outliers Identificados por Comunidad Autónoma",
-    x = "Año",
-    y = "Valor Global",
-    fill = "Clase (Boxplot)",
-    color = "Clase (Outliers)"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-print(plot_boxplot_outliers)
-```
-
-```{r}
 plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
   geom_point(
@@ -462,9 +395,7 @@ plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Gl
   )
 
 print(plot_boxplot_outliers)
-
 ```
-
 
 Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. A través de las etiquetas asociadas a cada valor extremo, que identifican a qué comunidad o ciudad autónoma pertenece cada uno, verificamos algunas observaciones previas, y además logramos divisar nuevas observaciones.
 
