@@ -372,10 +372,11 @@ modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
 cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
-Cluster 1:
-Multiple R-squared: 0.2073
-p-value: 3.14e-06
+Cluster 1: Multiple R-squared = 0.2073, p-value = 3.14e-06.
 
+Cluster 2: Multiple R-squared = 0.2886, p-value = 3.88e-12.
+
+Cluster 3: Multiple R-squared = 0.2791, p-value = 7.234e-06.
 
 Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
 
