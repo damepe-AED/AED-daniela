@@ -1,0 +1,511 @@
+---
+title: 'Proyecto AED: Análisis de la Calidad de Vida en España'
+author: "Daniela Meriño, Víctor Mateu, Antonio Nova"
+date: "2024-12-31"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Introducción
+
+La calidad de vida es un concepto multidimensional que abarca aspectos económicos, sociales, ambientales y subjetivos, reflejando el bienestar general de las personas en una sociedad. En este trabajo, analizaremos la calidad de vida en España, desglosada en diversas dimensiones, a lo largo de varias comunidades autónomas y un periodo de años.
+
+El análisis se centra en múltiples dimensiones de la calidad de vida, como las condiciones materiales, la salud, la educación, el trabajo, las relaciones sociales, la seguridad, el entorno ambiental y la gobernanza, entre otras. Además, el enfoque temporal nos permitirá evaluar tendencias, identificar patrones y observar disparidades entre las diferentes comunidades autónomas.
+
+Los datos utilizados para este estudio provienen de un conjunto estructurado que organiza información clave de calidad de vida por año, comunidad autónoma y dimensión. Este formato permitirá realizar comparaciones entre las regiones y temporales, utilizando herramientas estadísticas y visualizaciones  para descubrir las relaciones y diferencias significativas entre las regiones de España.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+rm(list=ls())
+# Librerías utilizadas:
+library(tidyverse)
+library(factoextra)
+library(dendextend)
+library(dplyr)
+library(tidyr)
+library(tinytex)
+library(readxl)
+library(bookdown)
+library(sf)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(factoextra)
+library(ggrepel)
+library(ggcorrplot)
+```
+
+## Importación y Ordenación de los datos 
+
+En este apartado, se procede a la importación y preparación de los datos proporcionados por el Instituto Nacional de Estadística (INE) de España. Los datos corresponden al [**Indicador Multidimensional de Calidad de Vida (IMCV)**](https://ine.es/experimental/imcv/experimental_ind_multi_calidad_vida.htm). Este indicador tiene como objetivo ofrecer una visión integral del bienestar en las distintas comunidades autónomas mediante la evaluación de múltiples dimensiones, como salud, educación, trabajo, entre otras.
+
+Nuestro conjunto de datos se organiza en nueve dimensiones. Estas abarcan aspectos clave como condiciones materiales de vida (renta, pobreza y seguridad económica), trabajo (empleo y calidad laboral), salud (esperanza de vida y determinantes como ejercicio y tabaquismo), educación (formación y abandono escolar), ocio y relaciones sociales (satisfacción y apoyo social), seguridad física (criminalidad y percepción de seguridad), gobernanza (confianza en instituciones y participación política), entorno (contaminación y acceso a zonas verdes) y experiencia de vida (satisfacción y propósito vital). Juntas, estas dimensiones ofrecen una visión del bienestar en las diferentes comunidades autónomas de España.
+
+La naturaleza experimental de estos datos implica que están en proceso de consolidación metodológica y pueden incluir innovaciones en las fuentes de información. En este sentido, el primer paso es garantizar que los datos se encuentren correctamente estructurados y listos para su análisis.
+
+En primer lugar, destacar que de este conjunto de datos utilizada tiene un número muy elevado de variables por lo que nosotros nos centraremos en los resultados globales de cada dimensión por comunidad autónoma por año.
+
+Aunque, para enteder un poco mejor de cómo se han obtenido los datos del conjunto que vamos a analizar, destacar que el cálculo del **Indicador Multidimensional de Calidad de Vida (IMCV)** se basa en la selección de indicadores representativos de nueve dimensiones clave, como condiciones materiales de vida, salud, educación y trabajo, obtenidos de fuentes estadísticas como la Encuesta de Condiciones de Vida. Los valores de cada indicador se normalizan para permitir comparaciones homogéneas mediante el método Mazziotta-Pareto Ajustado (AMPI), que reescala los datos en un rango común y penaliza la variabilidad excesiva. Posteriormente, se agregan los valores normalizados de cada dimensión en un índice representativo, y finalmente, los índices de todas las dimensiones se combinan en un único valor global mediante una media ponderada. El resultado permite analizar la evolución temporal y las diferencias territoriales en la calidad de vida en España.
+
+```{r, include=FALSE}
+# Cargar los datos desde el archivo
+file_path <- "data/datos_calidad_vida_multi.xlsx"
+data <- read_excel(file_path, sheet = "AMPI Global", range = "A4:EO23")
+
+# Limpiar los nombres de las columnas
+colnames(data) <- gsub("\\.+", "", colnames(data))
+
+# Sustituir comas por puntos en los valores numéricos y convertir a numeric
+data[-1] <- lapply(data[-1], function(x) as.numeric(gsub(",", ".", as.character(x))))
+
+# Corregir la asignación de nombres de columnas
+# Número de dimensiones y años
+num_dim <- 9  # Número de dimensiones por año
+num_anios <- (ncol(data) - 1) / num_dim  # Calcular el número de años
+anios <- seq(2008, 2008 + num_anios - 1)  # Generar la secuencia de años
+
+# Crear nombres de columnas combinando años y dimensiones
+colnames(data)[-1] <- paste0(rep(anios, each = num_dim), ".dim", rep(1:num_dim, times = length(anios)))
+
+# Convertir a formato tidy
+data_tidy <- data %>%
+  pivot_longer(
+    cols = -Total,
+    names_to = c("Anio", "Dim"),
+    names_sep = "\\.",
+    values_to = "Valor"
+  ) %>%
+  rename(CCAA = Total) %>%  # Renombrar la columna 'Total' a 'CCAA'
+  mutate(
+    Anio = as.integer(Anio),  # Convertir años a entero
+    Valor = as.numeric(Valor)  # Asegurar que los valores sean numéricos
+  )
+
+# Guardar el archivo tidy como CSV
+write.csv(data_tidy, "Datos_Tidy.csv", row.names = FALSE)
+```
+
+Una vez tenemos una idea básica sobre el dataset que vamos a analizar, nos centraremos en la importación y ordenación de este. 
+
+El fichero descargardo a través del INE se obtuvo en formato .xlsx, por lo que la importación se tuvo que realizar a través de la función _read_excel_ de la librería _readxl_. Se creo un código en R de manera que cumpla las conciones de un conjunto de datos considerado _tidy_. Esto requiere que cada variable está representada en una columna, cada observación de una variable está en una fila distinta, la primera fila incluye los nombres de las variables y los nombres deben ser representativos de las variables que almacenan. 
+
+```{r, echo=FALSE}
+data <- read.csv("Datos_Tidy.csv")
+head(data)
+```
+
+## Análisis de los datos
+
+El análisis de datos es un proceso fundamental para extraer información relevante, identificar patrones y apoyar la toma de decisiones basada en evidencia. En este caso, los datos proporcionan información multidimensional que permite explorar la calidad de vida en diferentes comunidades autónomas a lo largo del tiempo. Este análisis combina técnicas descriptivas, como visualizaciones y resúmenes estadísticos, con enfoques más avanzados, como modelos estadísticos y exploraciones multivariantes. 
+
+En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
+
+En primer lugar, vamos a analizar la relación de las diferentes dimensiones para cada comunidad autónoma. Esto se realiza calculando la matriz de correlación, a partir del método de Spearman, esta indicará una medida de cuán asociadas están las dimensiones.
+En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comunidad Valenciana, pero esta se realizó para todas las comunidades, se pueden ver en el Anexo, al final del documento.
+
+
+```{r, echo=FALSE,fig.width=5, fig.height=5}
+# Nombres reales de las dimensiones
+dim_names <- c(
+  "Condiciones Materiales de Vida",
+  "Trabajo",
+  "Salud",
+  "Educación",
+  "Ocio y Relaciones Sociales",
+  "Seguridad Física y Personal",
+  "Gobernanza y Derechos Básicos",
+  "Entorno y Medioambiente",
+  "Experiencia General de la Vida"
+)
+
+# Obtener lista de CCAA únicas
+ccaa <- "Comunitat Valenciana"
+
+# Crear un bucle para calcular y guardar las matrices de correlación
+# Filtrar los datos para la CCAA actual
+ccaa_data <- data %>%
+  filter(CCAA == ccaa)
+
+# Reorganizar los datos en formato ancho (dimensiones como columnas)
+ccaa_wide <- ccaa_data %>%
+  select(Anio, Dim, Valor) %>%
+  spread(key = Dim, value = Valor)
+
+# Calcular la matriz de correlación
+cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method = "spearman")
+
+# Asignar los nombres reales a las filas y columnas de la matriz de correlación
+colnames(cor_matrix) <- dim_names
+rownames(cor_matrix) <- dim_names
+
+# Crear el gráfico de la matriz de correlación
+plot <- ggcorrplot(cor_matrix, 
+                   method = "circle", 
+                   type = "lower",
+                   lab = TRUE, 
+                   lab_size = 3, 
+                   colors = c("red", "white", "blue"),
+                   title = paste("Matriz de Correlación -", ccaa),
+                   tl.cex = 7, 
+                   tl.srt = 45)+
+  theme(
+          plot.title = element_text(size = 10, face = "bold")  # Tamaño y estilo del título
+        )
+
+# Mostrar el gráfico
+print(plot)
+```
+
+El análisis de las correlaciones entre dimensiones en todas las comunidades autónomas revela que las Condiciones Materiales de Vida, el Trabajo y la Educación son las dimensiones más interrelacionadas, formando el núcleo del bienestar socioeconómico. Estas tres dimensiones están particularmente conectadas en regiones como Navarra, País Vasco y Madrid, que presentan sistemas más integrados. Por otro lado, dimensiones como el Entorno y Medioambiente y el Ocio y Relaciones Sociales tienden a ser más independientes, con menor conexión con factores económicos, aunque en algunas comunidades, como la Comunitat Valenciana y Melilla, muestran una relación moderada con la seguridad. La Experiencia General de la Vida está influenciada principalmente por las condiciones materiales y el empleo, aunque su alcance es más amplio en regiones con mayor desarrollo social. Finalmente, en comunidades como Melilla, Ceuta y Extremadura, las dimensiones muestran una mayor independencia, reflejando realidades locales más desconectadas entre sí. Este panorama resalta cómo el bienestar general varía significativamente según el contexto regional.
+
+Siguiendo con el análisis, dado el volumen de datos disponibles, procedemos a simplificar el conjunto calculando un promedio de todas las dimensiones para obtener un valor global de calidad de vida por comunidad autónoma y por año. Este enfoque nos permite mantener la representatividad de todas las dimensiones sin perder información relevante.
+
+```{r, include = FALSE}
+dimensiones <- unique(data$Dim)
+
+for (dim in dimensiones) {
+  # Filtrar los datos para la dimensión actual
+  dim_all <- data %>%
+    filter(Dim == dim)
+  
+  # Crear el gráfico
+  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+  
+  # Mostrar el gráfico
+  print(plot) 
+}
+```
+
+
+```{r, include=FALSE}
+sum(!(is.finite(data$Anio)))
+sum(!(is.finite(data$Valor)))
+```
+
+```{r, include=FALSE}
+dimensiones <- unique(data$Dim)
+
+nombre <- c(
+  "Condiciones Materiales de Vida",
+  "Trabajo",
+  "Salud",
+  "Educación",
+  "Ocio y Relaciones Sociales",
+  "Seguridad Física y Personal",
+  "Gobernanza y Derechos Básicos",
+  "Entorno y Medioambiente",
+  "Experiencia General de la Vida"
+)
+
+# Lista para almacenar gráficos temporalmente
+plots <- list()
+i<-1
+# Crear gráficos y almacenarlos en la lista
+for (dim in dimensiones) {
+  # Filtrar los datos para la dimensión actual
+  dim_all <- data %>%
+    filter(Dim == dim)
+  
+  # Crear el gráfico
+  plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = nombre[i],
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+    #theme(legend.position = "none")  # Quitar la leyenda
+  
+  # Agregar el gráfico a la lista
+  plots[[dim]] <- plot
+  i<-i+1
+  print(plot)
+}
+```
+
+```{r, include=FALSE,fig.width=5, fig.height=5}
+#Valor global por CCAA
+data_reducido <- data %>%
+  group_by(CCAA, Anio) %>%
+  summarise(Valor_Global = mean(Valor))
+```
+
+```{r, echo=FALSE}
+plot <- ggplot(data_reducido, aes(x = Anio, y = Valor_Global, color = CCAA, group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Valor Global de Calidad de Vida",
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+print(plot)
+```
+
+
+```{r, echo=FALSE}
+# Crear histogramas
+ggplot(data_reducido, aes(x = Valor_Global, y = ..density..)) +
+  geom_histogram(binwidth = 5, fill = "pink", color = "black", alpha = 0.7) +
+  facet_wrap(~ Anio, ncol = 3) +  # Facetas por año, con 3 columnas
+  labs(
+    title = "Evolución de la Distribución del Valor Global de la Calidad de Vida",
+    x = "Valor Global de la Calidad de Vida",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(size = 10),  # Tamaño del texto en las facetas
+    plot.title = element_text(size = 10, face = "bold"),  # título
+    axis.text.x = element_text(size = 7),  # Tamaño de los valores del eje X
+    axis.text.y = element_text(size = 7),  # Tamaño de los valores del eje Y
+    axis.title.x = element_text(size = 10),  # Tamaño de la etiqueta del eje X
+    axis.title.y = element_text(size = 10)
+    )
+
+
+```
+
+
+En la gráfica anterior se puede observar el índice global de calidad de vida en las diferentes comunidades autónomas de España a lo largo del tiempo. Notamos que, en general, las comunidades y ciudades autónomas presentan una tendencia creciente para este índice (especialmente después de 2015), aunque en los últimos años se puede apreciar una ligera caída general. La mayoría de las comunidades y ciudades autónomas han experimentado estos fenómenos con poca variabilidad alrededor de su tendencia, a excepción de alguna que sí que presenta gran variabilidad.
+
+El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan un índice más alto, que además se ha mantenido a lo largo del tiempo. Por otro lado, Ceuta presenta los valores más bajos en el conjunto, mantenidos a lo largo del tiempo. En los últimos años, se puede apreciar que Ceuta ha sufrido una caída alcanzando un índice en el último año que es notablemente más bajo que el de el resto de comunidades o ciudades autónomas. Parece haber disparidad entre ciertos grupos de comunidades y ciudades autónomas.
+
+Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
+
+```{r, echo = FALSE, warning=FALSE}
+dim_all <- data_reducido
+
+mat_dim <- dim_all %>%
+  select(CCAA, Anio, Valor_Global) %>%
+  pivot_wider(names_from = Anio, values_from = Valor_Global) %>%
+  column_to_rownames("CCAA")
+
+distancia <- dist(mat_dim, method = "euclidean")
+
+cluster_jerarquico <- hclust(distancia, method = "ward.D2")
+
+plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+```
+
+COMENTAR ALGO
+```{r,echo=FALSE, warning=FALSE}
+
+grupos <- cutree(cluster_jerarquico, k = 3)
+
+dim_all <- dim_all %>%
+  left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
+
+dim_all <- dim_all %>%
+  arrange(Cluster, CCAA)
+
+dim_all <- dim_all %>%
+  mutate(Cluster = case_when(
+    Cluster == 1 ~ "Clase baja",
+    Cluster == 2 ~ "Clase alta",
+    Cluster == 3 ~ "Clase media",
+    TRUE ~ as.character(Cluster)
+  ))
+
+plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor_Global, color = factor(Cluster), group = CCAA)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_smooth(
+    aes(group = Cluster),
+    method = "lm",
+    se = FALSE,
+    size = 1.2,
+    color = "black"
+  ) +
+  labs(
+    title = "Clustering de Calidad de Vida Global",
+    x = "Año",
+    y = "Valor",
+    color = "Cluster",
+    caption = "Fuente: Datos de Calidad de Vida"
+  ) +
+  theme_minimal()
+
+print(plot_cluster)
+
+cluster1 <- dim_all %>% filter(Cluster == "Clase alta")
+cluster2 <- dim_all %>% filter(Cluster == "Clase media")
+cluster3 <- dim_all %>% filter(Cluster == "Clase baja")
+
+clasebaja <- unique(cluster1 %>% select(CCAA))
+clasemedia <- unique(cluster2 %>% select(CCAA))
+clasealta <- unique(cluster3 %>% select(CCAA))
+
+modelo_cluster1 <- lm(Valor_Global ~ Anio, data = cluster1)
+cat("Cluster 1:")
+summary(modelo_cluster1)
+modelo_cluster2 <- lm(Valor_Global ~ Anio, data = cluster2)
+cat("Cluster 2:")
+summary(modelo_cluster2)
+modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
+cat("Cluster 3:")
+summary(modelo_cluster3)
+```
+
+
+Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
+
+Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
+
+Clase alta: Aragón, Principado de Asturias, Cantabria, Comunidad Foral de Navarra, País Vasco, y La Rioja.
+Clase media: Illes Balears, Castilla - La Mancha, Castilla y León, Cataluña, Comunitat Valenciana, Extremadura, Comunidad de Madrid, Melilla, y Región de Murcia.
+Clase baja: Andalucía, Canarias, Ceuta, Galicia.
+
+En la gráfica, se puede observar la recta de regresión ajustada a cada agrupación. Los dos coeficientes de cada recta son significativos a nivel $\alpha = 0.05$. Hay evidencia estadística a favor de la hipótesis sobre la tendencia lineal y creciente en los índices de las tres agrupaciones. Además, las pendientes de las rectas son muy similares. Por otro lado, la diferencia de altura entre las rectas de la clase alta y de la media es muy similar a la diferencia de altura entre las rectas de la clase media y de la baja. El valor de esta diferencia es de aproximadamente $3$ puntos, i.e., hay una clara diferencia entre las clases.
+
+Finalmente, notamos que a penas hay solapamiento entre las agrupaciones a lo largo del tiempo, excepto en el último lustro. Este solapamiento cesa en el último año registrado. La clase alta presenta un crecimiento estable a lo largo del tiempo. La clase media presenta un crecimiento generalmente estable hasta 2017, donde experimenta un gran crecimiento relativo que se estanca decrece ligeramente posteriormente (a partir de 2019). La clase baja presenta un estancamiento genereal hasta 2015, donde experimenta un crecimiento general (que en algunos casos es superlativo), y posteriormente experimenta un decaimiento general (a partir de 2019).
+
+```{r, echo = FALSE}
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias, Principado de", "Asturias")
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra, Comunidad Foral de", "Navarra")
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia, Región de", "Murcia")
+
+
+outlier_data <- dim_all %>%
+  group_by(Anio, Cluster) %>%
+  mutate(
+    Q1 = quantile(Valor_Global, 0.25),
+    Q3 = quantile(Valor_Global, 0.75),
+    IQR = Q3 - Q1,
+    Lower = Q1 - 1.5 * IQR,
+    Upper = Q3 + 1.5 * IQR,
+    IsOutlier = Valor_Global < Lower | Valor_Global > Upper
+  ) %>%
+  ungroup()
+
+plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+  geom_point(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(color = Cluster),
+    size = 3,
+    position = position_jitter(width = 0.2)
+  ) +
+  geom_text(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(label = CCAA),
+    position = position_jitter(width = 0.2, height = 0),
+    vjust = -0.5,
+    size = 3
+  ) +
+  labs(
+    title = "Boxplots con Outliers Identificados por Comunidad Autónoma",
+    x = "Año",
+    y = "Valor Global",
+    fill = "Clase (Boxplot)",
+    color = "Clase (Outliers)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+print(plot_boxplot_outliers)
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias", "Asturias, Principado de")
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra", "Navarra, Comunidad Foral de")
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia","Murcia, Región de")
+
+
+```
+
+Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. A través de las etiquetas asociadas a cada valor extremo, que identifican a qué comunidad o ciudad autónoma pertenece cada uno, verificamos algunas observaciones previas, y además logramos divisar nuevas observaciones.
+
+Los valores extremos superiores de la clase alta pertenecen a la Comunidad Foral de Navarra; y el valor extremo inferior de la clase alta en el último año pertenece al Principado de Asturias. El valor extremo superior de la clase media en 2020 pertenece a les Illes Balears; y los valores extremos inferiores de la clase media pertenecen a la Región de Murcia (2019 y 2021) y a Melilla (2021). Los valores extremos superiores de la clase baja pertenecen a Andalucía (2015 y 2017) y a Galicia (2021); y los valores extremos inferiores de la clase baja pertenecen a Ceuta (2008 y 2023) y a Galicia (2009).
+
+Habiendo observado estos valores extremos, volvemos a apreciar como la Comunidad Foral de Navarra ha líderado el conjunto con el mayor índice, con diferencia, del conjunto en su totalidad. Ceuta se ha mantenido con valores extremos alcanzando índices muy bajos comparados con los del resto de observaciones. Asimismo, Ceuta no ha experimentado ese crecimiento generalizado que sí se ha experimentado, en general, en el conjunto. Por último, notamos que Galicia ha experimentado un gran crecimiento a lo largo del período estudiado, llegando a superar a la Región de Murcia y a Melilla en algún año (como en 2021), que son miembros de la clase media.
+
+Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
+
+```{r, include =FALSE}
+#este chunk no sirve era para ver si en las diferentes dimensiones tambien se cumplen los clusteres que se cumplian para el valor global
+
+clases <- dim_all %>%
+  select(CCAA, Cluster) %>%
+  distinct()  # Evitar duplicados si hay múltiples años
+
+# Unir las clases al dataset `data`
+data <- data %>%
+  left_join(clases, by = "CCAA")
+
+
+prueba <- data %>%
+  filter(Dim == "dim1")
+
+# Graficar los resultados del clustering
+plot <- ggplot(prueba, aes(x = Anio, y = Valor, color = factor(Cluster), group = CCAA)) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = "Dimensión 1",
+      x = "Año",
+      y = "Valor",
+      color = "CCAA",
+      caption = "Fuente: Datos de Calidad de Vida"
+    ) +
+    theme_minimal()
+print(plot)
+
+```
+
+
+```{r, include=FALSE}
+# Matriz de correlación de Spearman entre dimensiones por CCAA
+ccaa_list <- unique(data$CCAA)
+
+for (ccaa in ccaa_list){
+  ccaa_data <- data %>%
+    filter(CCAA == ccaa)
+  
+  # Reorganizar los datos en formato ancho (dimensiones como columnas)
+  ccaa_wide <- ccaa_data %>%
+    select(Anio, Dim, Valor) %>%
+    spread(key = Dim, value = Valor)
+  
+  # matriz de correlación
+  cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method="spearman")
+  
+  # Crear el gráfico de la matriz de correlación
+  plot <- ggcorrplot(cor_matrix, 
+                     method = "circle", 
+                     type = "lower",
+                     lab = TRUE, 
+                     lab_size = 3, 
+                     colors = c("red", "white", "blue"),
+                     title = paste("Matriz de Correlación -", ccaa),
+                     tl.cex = 10, 
+                     tl.srt = 45)
+
+  
+  print(plot)
+}
+```
