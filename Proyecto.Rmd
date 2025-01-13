@@ -323,7 +323,7 @@ Clase baja: Andalucía, Canarias, Ceuta, Galicia.
 Vemos que en el caso de la clase alta tenemos una subagrupación la cuál distingue la Comunidad Foral de Navarra del resto, por la tanto podemos esperar que en el análisis posterior de la clase alta la Comunidad Foral de Navarra sea la que más difiera del comportamiento general del grupo.
 En el caso de la clase media, tenemos dos subagrupaciones que contienen cuatro y cinco comunidades autónomas, por lo que no cabría esperar comportamientos fuera de la generalidad del grupo.
 Finalmente, para la clase baja sucede lo mismo que para la clase alta, en este caso Ceuta es la comunidad que más difiere de su clase.
-```{r,echo=FALSE, warning=FALSE}
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
 
 grupos <- cutree(cluster_jerarquico, k = 3)
 
@@ -381,9 +381,9 @@ modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
 cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
-Cluster 1: Valor_Global = 0.11296·Año - 124.07874, multiple R-squared = 0.2073, p-value = 3.14e-06.
+Cluster 1: Valor_Global = 0.1130·Año - 124.0787, multiple R-squared = 0.2073, p-value = 3.14e-06.
 
-Cluster 2: Valor_Global = 0.16330·Año - 228.33700, multiple R-squared = 0.2886, p-value = 3.88e-12.
+Cluster 2: Valor_Global = 0.1633·Año - 228.3370, multiple R-squared = 0.2886, p-value = 3.88e-12.
 
 Cluster 3: Valor_Global = 0.1455·Año - 195.3640, multiple R-squared = 0.2791, p-value = 7.234e-06.
 
