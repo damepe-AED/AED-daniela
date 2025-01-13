@@ -271,7 +271,7 @@ El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan
 
 Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning=FALSE}
 dim_all <- data_reducido
 
 mat_dim <- dim_all %>%
@@ -284,6 +284,11 @@ distancia <- dist(mat_dim, method = "euclidean")
 cluster_jerarquico <- hclust(distancia, method = "ward.D2")
 
 plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
+
+```
+
+COMENTAR ALGO
+```{r,echo=FALSE, warning=FALSE}
 
 grupos <- cutree(cluster_jerarquico, k = 3)
 
@@ -321,9 +326,7 @@ plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor_Global, color = factor(C
   theme_minimal()
 
 print(plot_cluster)
-```
 
-```{r, echo=FALSE}
 cluster1 <- dim_all %>% filter(Cluster == "Clase alta")
 cluster2 <- dim_all %>% filter(Cluster == "Clase media")
 cluster3 <- dim_all %>% filter(Cluster == "Clase baja")
