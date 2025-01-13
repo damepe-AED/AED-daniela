@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 rm(list=ls())
-#librerias utilizadas:
+# Librerías utilizadas:
 library(tidyverse)
 library(factoextra)
 library(dendextend)
@@ -37,6 +37,7 @@ library(ggplot2)
 library(reshape2)
 library(gridExtra)
 library(factoextra)
+library(ggrepel)
 library(ggcorrplot)
 ```
 
@@ -354,46 +355,6 @@ En la gráfica, se puede observar la recta de regresión ajustada a cada agrupac
 Finalmente, notamos que a penas hay solapamiento entre las agrupaciones a lo largo del tiempo, excepto en el último lustro. Este solapamiento cesa en el último año registrado. La clase alta presenta un crecimiento estable a lo largo del tiempo. La clase media presenta un crecimiento generalmente estable hasta 2017, donde experimenta un gran crecimiento relativo que se estanca decrece ligeramente posteriormente (a partir de 2019). La clase baja presenta un estancamiento genereal hasta 2015, donde experimenta un crecimiento general (que en algunos casos es superlativo), y posteriormente experimenta un decaimiento general (a partir de 2019).
 
 ```{r}
-plot_boxplot <- ggplot(dim_all, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
-  geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.shape = 16) +
-  labs(
-    title = "Distribución de Valor Global por Año y Clase",
-    x = "Año",
-    y = "Valor Global",
-    fill = "Clase"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-print(plot_boxplot)
-```
-
-```{r}
-plot_boxplot_outliers <- ggplot(dim_all, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
-  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_jitter(
-    aes(color = Cluster),
-    width = 0.2,
-    size = 2
-  ) +
-  labs(
-    title = "Boxplots con Outliers Coloreados por Clase",
-    x = "Año",
-    y = "Valor Global",
-    fill = "Clase (Boxplot)",
-    color = "Clase (Outliers)"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-print(plot_boxplot_outliers)
-```
-
-```{r}
 outlier_data <- dim_all %>%
   group_by(Anio, Cluster) %>%
   mutate(
@@ -429,7 +390,87 @@ plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Gl
 print(plot_boxplot_outliers)
 ```
 
-Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. Relacionando estas observaciones con la gráfica general, identificamos que los valores extremos superiores de la clase alta pertenecen a la Comunidad Foral de Navarra; los valores extremos superiores de la clase baja pertenecen a Galicia; y los valores extremos inferiores de la clase baja pertenecen a Ceuta. [POR DESARROLLAR]
+```{r}
+outlier_data <- dim_all %>%
+  group_by(Anio, Cluster) %>%
+  mutate(
+    Q1 = quantile(Valor_Global, 0.25),
+    Q3 = quantile(Valor_Global, 0.75),
+    IQR = Q3 - Q1,
+    Lower = Q1 - 1.5 * IQR,
+    Upper = Q3 + 1.5 * IQR,
+    IsOutlier = Valor_Global < Lower | Valor_Global > Upper
+  ) %>%
+  ungroup()
+
+plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+  geom_point(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(color = Cluster),
+    size = 3,
+    position = position_jitter(width = 0.2)
+  ) +
+  geom_text(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(label = CCAA),
+    position = position_jitter(width = 0.2, height = 0),
+    hjust = -0.2,
+    size = 3
+  ) +
+  labs(
+    title = "Boxplots con Outliers Identificados por Comunidad Autónoma",
+    x = "Año",
+    y = "Valor Global",
+    fill = "Clase (Boxplot)",
+    color = "Clase (Outliers)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+print(plot_boxplot_outliers)
+```
+
+```{r}
+plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+  geom_point(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(color = Cluster),
+    size = 3,
+    position = position_jitter(width = 0.2)
+  ) +
+  geom_text(
+    data = outlier_data %>% filter(IsOutlier),
+    aes(label = CCAA),
+    position = position_jitter(width = 0.2, height = 0),
+    vjust = -0.5,
+    size = 3
+  ) +
+  labs(
+    title = "Boxplots con Outliers Identificados por Comunidad Autónoma",
+    x = "Año",
+    y = "Valor Global",
+    fill = "Clase (Boxplot)",
+    color = "Clase (Outliers)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+print(plot_boxplot_outliers)
+
+```
+
+
+Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. A través de las etiquetas asociadas a cada valor extremo, que identifican a qué comunidad o ciudad autónoma pertenece cada uno, verificamos algunas observaciones previas, y además logramos divisar nuevas observaciones.
+
+Los valores extremos superiores de la clase alta pertenecen a la Comunidad Foral de Navarra; y el valor extremo inferior de la clase alta en el último año pertenece al Principado de Asturias. El valor extremo superior de la clase media en 2020 pertenece a les Illes Balears; y los valores extremos inferiores de la clase media pertenecen a la Región de Murcia (2019 y 2021) y a Melilla (2021). Los valores extremos superiores de la clase baja pertenecen a Andalucía (2015 y 2017) y a Galicia (2021); y los valores extremos inferiores de la clase baja pertenecen a Ceuta (2008 y 2023) y a Galicia (2009).
+
+Habiendo observado estos valores extremos, volvemos a apreciar como la Comunidad Foral de Navarra ha líderado el conjunto con el mayor índice, con diferencia, del conjunto en su totalidad. Ceuta se ha mantenido con valores extremos alcanzando índices muy bajos comparados con los del resto de observaciones. Asimismo, Ceuta no ha experimentado ese crecimiento generalizado que sí se ha experimentado, en general, en el conjunto. Por último, notamos que Galicia ha experimentado un gran crecimiento a lo largo del período estudiado, llegando a superar a la Región de Murcia y a Melilla en algún año (como en 2021), que son miembros de la clase media.
 
 Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
 
