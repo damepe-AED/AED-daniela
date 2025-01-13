@@ -175,8 +175,8 @@ for (dim in dimensiones) {
   
   # Crear el gráfico
   plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
-    geom_line(linewidth = 1) +
-    geom_point(linewidth = 2) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
     labs(
       x = "Año",
       y = "Valor",
@@ -263,13 +263,8 @@ plot <- ggplot(data_reducido, aes(x = Anio, y = Valor_Global, color = CCAA, grou
 print(plot)
 ```
 
-En la gráfica anterior se puede observar el índice global de calidad de vida en las diferentes comunidades autónomas de España a lo largo del tiempo. Notamos que, en general, las comunidades y ciudades autónomas presentan una tendencia creciente para este índice (especialmente después de 2015), aunque en los últimos años se puede apreciar una ligera caída general. La mayoría de las comunidades y ciudades autónomas han experimentado estos fenómenos con poca variabilidad alrededor de su tendencia, a excepción de alguna que sí que presenta gran variabilidad.
 
-El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan un índice más alto, que además se ha mantenido a lo largo del tiempo. Por otro lado, Ceuta presenta los valores más bajos en el conjunto, mantenidos a lo largo del tiempo. En los últimos años, se puede apreciar que Ceuta ha sufrido una caída alcanzando un índice en el último año que es notablemente más bajo que el de el resto de comunidades o ciudades autónomas. Parece haber disparidad entre ciertos grupos de comunidades y ciudades autónomas.
-
-Es por esto, que vamos a realizar un histograma con 3 bines correspondientes a las categorías de clase alta, media y baja donde agruparemos las comunidades autónomas, basado en el valor global de calidad de vida. Este análisis permitirá visualizar cómo evoluciona la distribución de estas clases a lo largo del tiempo, identificando posibles cambios en la composición de las comunidades autónomas dentro de cada categoría.
-
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE}
 # Crear histogramas
 ggplot(data_reducido, aes(x = Valor_Global, y = ..density..)) +
   geom_histogram(binwidth = 5, fill = "pink", color = "black", alpha = 0.7) +
@@ -291,9 +286,11 @@ ggplot(data_reducido, aes(x = Valor_Global, y = ..density..)) +
 
 
 ```
-Lo primero que llama la atención es que entre 2008 y 2009, se observa un aumento notable en la proporción de comunidades autónomas con valores más bajos de calidad de vida, lo que coincide con el impacto de la crisis económica en España. Esto sugiere un desplazamiento hacia la clase baja en ese período, posiblemente debido a los problemas económicos que afectó a diversas dimesiones sociales y económicas. A lo largo de los años siguientes, las distribuciones parecen recuperar cierta estabilidad, con una concentración gradual hacia valores medios en la mayoría de las comunidades autónomas. Sin embargo, el rango de valores permanece relativamente constante, indicando que las desigualdades entre las comunidades autónomas persisten.
 
-Otro factor que llama la atención en los histogramas es que entre 2018 y 2019 la clase alta aumenta de manera considerable. Esto podría estar relacionado con eventos como el incremento del salario mínimo interprofesional en 2019, que pasó de 735.9€ a 900€ mensuales, beneficiando especialmente a las regiones con sectores de bajos ingresos. Además, la recuperación sostenida del empleo, con una significativa disminución de la tasa de paro, y el rendimiento positivo del turismo en comunidades como Baleares, Canarias, Cataluña y Comunidad Valenciana, también jugaron un papel clave. Estas mejoras se complementaron con un mayor gasto público en sanidad, educación y políticas sociales, contribuyendo a fortalecer los dimensiones de bienestar en varias comunidades autónomas, añadiéndolas en la clase alta.
+
+En la gráfica anterior se puede observar el índice global de calidad de vida en las diferentes comunidades autónomas de España a lo largo del tiempo. Notamos que, en general, las comunidades y ciudades autónomas presentan una tendencia creciente para este índice (especialmente después de 2015), aunque en los últimos años se puede apreciar una ligera caída general. La mayoría de las comunidades y ciudades autónomas han experimentado estos fenómenos con poca variabilidad alrededor de su tendencia, a excepción de alguna que sí que presenta gran variabilidad.
+
+El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan un índice más alto, que además se ha mantenido a lo largo del tiempo. Por otro lado, Ceuta presenta los valores más bajos en el conjunto, mantenidos a lo largo del tiempo. En los últimos años, se puede apreciar que Ceuta ha sufrido una caída alcanzando un índice en el último año que es notablemente más bajo que el de el resto de comunidades o ciudades autónomas. Parece haber disparidad entre ciertos grupos de comunidades y ciudades autónomas.
 
 Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
@@ -313,17 +310,8 @@ plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "",
 
 ```
 
-En el dendograma se puede observar la separación de las comunidades autonomas en tres clases.
-Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
-
-Clase alta: Aragón, Principado de Asturias, Cantabria, Comunidad Foral de Navarra, País Vasco, y La Rioja.
-Clase media: Illes Balears, Castilla - La Mancha, Castilla y León, Cataluña, Comunitat Valenciana, Extremadura, Comunidad de Madrid, Melilla, y Región de Murcia.
-Clase baja: Andalucía, Canarias, Ceuta, Galicia.
-
-Vemos que en el caso de la clase alta tenemos una subagrupación la cuál distingue la Comunidad Foral de Navarra del resto, por la tanto podemos esperar que en el análisis posterior de la clase alta la Comunidad Foral de Navarra sea la que más difiera del comportamiento general del grupo.
-En el caso de la clase media, tenemos dos subagrupaciones que contienen cuatro y cinco comunidades autónomas, por lo que no cabría esperar comportamientos fuera de la generalidad del grupo.
-Finalmente, para la clase baja sucede lo mismo que para la clase alta, en este caso Ceuta es la comunidad que más difiere de su clase.
-```{r,echo=FALSE, warning=FALSE, message=FALSE}
+COMENTAR ALGO
+```{r,echo=FALSE, warning=FALSE}
 
 grupos <- cutree(cluster_jerarquico, k = 3)
 
@@ -369,8 +357,7 @@ cluster3 <- dim_all %>% filter(Cluster == "Clase baja")
 clasebaja <- unique(cluster1 %>% select(CCAA))
 clasemedia <- unique(cluster2 %>% select(CCAA))
 clasealta <- unique(cluster3 %>% select(CCAA))
-```
-```{r, include=FALSE}
+
 modelo_cluster1 <- lm(Valor_Global ~ Anio, data = cluster1)
 cat("Cluster 1:")
 summary(modelo_cluster1)
@@ -381,13 +368,15 @@ modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
 cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
-Cluster 1: Valor_Global = 0.1130·Año - 124.0787, multiple R-squared = 0.2073, p-value = 3.14e-06.
 
-Cluster 2: Valor_Global = 0.1633·Año - 228.3370, multiple R-squared = 0.2886, p-value = 3.88e-12.
-
-Cluster 3: Valor_Global = 0.1455·Año - 195.3640, multiple R-squared = 0.2791, p-value = 7.234e-06.
 
 Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
+
+Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
+
+Clase alta: Aragón, Principado de Asturias, Cantabria, Comunidad Foral de Navarra, País Vasco, y La Rioja.
+Clase media: Illes Balears, Castilla - La Mancha, Castilla y León, Cataluña, Comunitat Valenciana, Extremadura, Comunidad de Madrid, Melilla, y Región de Murcia.
+Clase baja: Andalucía, Canarias, Ceuta, Galicia.
 
 En la gráfica, se puede observar la recta de regresión ajustada a cada agrupación. Los dos coeficientes de cada recta son significativos a nivel $\alpha = 0.05$. Hay evidencia estadística a favor de la hipótesis sobre la tendencia lineal y creciente en los índices de las tres agrupaciones. Además, las pendientes de las rectas son muy similares. Por otro lado, la diferencia de altura entre las rectas de la clase alta y de la media es muy similar a la diferencia de altura entre las rectas de la clase media y de la baja. El valor de esta diferencia es de aproximadamente $3$ puntos, i.e., hay una clara diferencia entre las clases.
 
@@ -455,10 +444,7 @@ Los valores extremos superiores de la clase alta pertenecen a la Comunidad Foral
 
 Habiendo observado estos valores extremos, volvemos a apreciar como la Comunidad Foral de Navarra ha líderado el conjunto con el mayor índice, con diferencia, del conjunto en su totalidad. Ceuta se ha mantenido con valores extremos alcanzando índices muy bajos comparados con los del resto de observaciones. Asimismo, Ceuta no ha experimentado ese crecimiento generalizado que sí se ha experimentado, en general, en el conjunto. Por último, notamos que Galicia ha experimentado un gran crecimiento a lo largo del período estudiado, llegando a superar a la Región de Murcia y a Melilla en algún año (como en 2021), que son miembros de la clase media.
 
-```{r, include=FALSE}
-#Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
-```
-
+Ahora, para poder analizar también las dimensiones, se pensó en crear las 3 macrocomunidades autónomas (clase alta, media y baja) y realizar el promedio de las diferentes dimensiones dentro de cada macrocomunidad. Sin embargo, como pueden ser independientes de cada comunidad, primero hay que hacer un análisis de cada dimensión para saber si estas comunidades son factibles.
 
 ```{r, include =FALSE}
 #este chunk no sirve era para ver si en las diferentes dimensiones tambien se cumplen los clusteres que se cumplian para el valor global
