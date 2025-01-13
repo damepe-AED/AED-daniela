@@ -3,7 +3,6 @@ title: 'Proyecto AED: Análisis de la Calidad de Vida en España'
 author: "Daniela Meriño, Víctor Mateu, Antonio Nova"
 date: "2024-12-31"
 output:
-  
   pdf_document: default
   html_document: default
 ---
