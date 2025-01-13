@@ -175,8 +175,8 @@ for (dim in dimensiones) {
   
   # Crear el gráfico
   plot <- ggplot(dim_all, aes(x = Anio, y = Valor, color = CCAA, group = CCAA)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
+    geom_line(linewidth = 1) +
+    geom_point(linewidth = 2) +
     labs(
       x = "Año",
       y = "Valor",
