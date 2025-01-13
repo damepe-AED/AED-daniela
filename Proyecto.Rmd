@@ -361,7 +361,7 @@ clasebaja <- unique(cluster1 %>% select(CCAA))
 clasemedia <- unique(cluster2 %>% select(CCAA))
 clasealta <- unique(cluster3 %>% select(CCAA))
 ```
-```{r, include=FALSE}}
+```{r, include=FALSE}
 modelo_cluster1 <- lm(Valor_Global ~ Anio, data = cluster1)
 cat("Cluster 1:")
 summary(modelo_cluster1)
