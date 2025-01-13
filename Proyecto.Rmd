@@ -523,3 +523,15 @@ for (ccaa in ccaa_list){
   print(plot)
 }
 ```
+
+```{r, include=FALSE}
+
+data2023 <- data %>%
+  filter(data$Anio==2023)
+
+heatmap_data <- data2023 %>%
+  dcast(CCAA ~ Dim, value.var = "Valor")
+heatmap(as.matrix(heatmap_data[, -1]))
+
+```
+
