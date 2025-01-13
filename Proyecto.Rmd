@@ -263,11 +263,37 @@ plot <- ggplot(data_reducido, aes(x = Anio, y = Valor_Global, color = CCAA, grou
 print(plot)
 ```
 
-Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
-
 En la gráfica anterior se puede observar el índice global de calidad de vida en las diferentes comunidades autónomas de España a lo largo del tiempo. Notamos que, en general, las comunidades y ciudades autónomas presentan una tendencia creciente para este índice (especialmente después de 2015), aunque en los últimos años se puede apreciar una ligera caída general. La mayoría de las comunidades y ciudades autónomas han experimentado estos fenómenos con poca variabilidad alrededor de su tendencia, a excepción de alguna que sí que presenta gran variabilidad.
 
 El País Vasco y la Comunidad Foral de Navarra son las comunidades que presentan un índice más alto, que además se ha mantenido a lo largo del tiempo. Por otro lado, Ceuta presenta los valores más bajos en el conjunto, mantenidos a lo largo del tiempo. En los últimos años, se puede apreciar que Ceuta ha sufrido una caída alcanzando un índice en el último año que es notablemente más bajo que el de el resto de comunidades o ciudades autónomas. Parece haber disparidad entre ciertos grupos de comunidades y ciudades autónomas.
+
+Es por esto, que vamos a realizar un histograma con 3 bines correspondientes a las categorías de clase alta, media y baja donde agruparemos las comunidades autónomas, basado en el valor global de calidad de vida. Este análisis permitirá visualizar cómo evoluciona la distribución de estas clases a lo largo del tiempo, identificando posibles cambios en la composición de las comunidades autónomas dentro de cada categoría.
+
+```{r, echo=FALSE, warning=FALSE}
+# Crear histogramas
+ggplot(data_reducido, aes(x = Valor_Global, y = ..density..)) +
+  geom_histogram(binwidth = 5, fill = "pink", color = "black", alpha = 0.7) +
+  facet_wrap(~ Anio, ncol = 3) +  # Facetas por año, con 3 columnas
+  labs(
+    title = "Evolución de la Distribución del Valor Global de la Calidad de Vida",
+    x = "Valor Global de la Calidad de Vida",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(size = 10),  # Tamaño del texto en las facetas
+    plot.title = element_text(size = 10, face = "bold"),  # título
+    axis.text.x = element_text(size = 7),  # Tamaño de los valores del eje X
+    axis.text.y = element_text(size = 7),  # Tamaño de los valores del eje Y
+    axis.title.x = element_text(size = 10),  # Tamaño de la etiqueta del eje X
+    axis.title.y = element_text(size = 10)
+    )
+
+
+```
+Lo primero que llama la atención es que entre 2008 y 2009, se observa un aumento notable en la proporción de comunidades autónomas con valores más bajos de calidad de vida, lo que coincide con el impacto de la crisis económica en España. Esto sugiere un desplazamiento hacia la clase baja en ese período, posiblemente debido a los problemas económicos que afectó a diversas dimesiones sociales y económicas. A lo largo de los años siguientes, las distribuciones parecen recuperar cierta estabilidad, con una concentración gradual hacia valores medios en la mayoría de las comunidades autónomas. Sin embargo, el rango de valores permanece relativamente constante, indicando que las desigualdades entre las comunidades autónomas persisten.
+
+Otro factor que llama la atención en los histogramas es que entre 2018 y 2019 la clase alta aumenta de manera considerable. Esto podría estar relacionado con eventos como el incremento del salario mínimo interprofesional en 2019, que pasó de 735.9€ a 900€ mensuales, beneficiando especialmente a las regiones con sectores de bajos ingresos. Además, la recuperación sostenida del empleo, con una significativa disminución de la tasa de paro, y el rendimiento positivo del turismo en comunidades como Baleares, Canarias, Cataluña y Comunidad Valenciana, también jugaron un papel clave. Estas mejoras se complementaron con un mayor gasto público en sanidad, educación y políticas sociales, contribuyendo a fortalecer los dimensiones de bienestar en varias comunidades autónomas, añadiéndolas en la clase alta.
 
 Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
@@ -345,6 +371,7 @@ modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
 cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
+Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
 
 Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
 
