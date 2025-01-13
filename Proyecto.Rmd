@@ -400,6 +400,13 @@ plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Gl
   )
 
 print(plot_boxplot_outliers)
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias", "Asturias, Principado de")
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra", "Navarra, Comunidad Foral de")
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia","Murcia, Región de")
+
+
 ```
 
 Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. A través de las etiquetas asociadas a cada valor extremo, que identifican a qué comunidad o ciudad autónoma pertenece cada uno, verificamos algunas observaciones previas, y además logramos divisar nuevas observaciones.
