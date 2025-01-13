@@ -333,13 +333,13 @@ clasemedia <- unique(cluster2 %>% select(CCAA))
 clasealta <- unique(cluster3 %>% select(CCAA))
 
 modelo_cluster1 <- lm(Valor_Global ~ Anio, data = cluster1)
-print("Cluster 1")
+cat("Cluster 1:")
 summary(modelo_cluster1)
 modelo_cluster2 <- lm(Valor_Global ~ Anio, data = cluster2)
-print("Cluster 2")
+cat("Cluster 2:")
 summary(modelo_cluster2)
 modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
-print("Cluster 3")
+cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
 
@@ -354,6 +354,12 @@ En la gráfica, se puede observar la recta de regresión ajustada a cada agrupac
 Finalmente, notamos que a penas hay solapamiento entre las agrupaciones a lo largo del tiempo, excepto en el último lustro. Este solapamiento cesa en el último año registrado. La clase alta presenta un crecimiento estable a lo largo del tiempo. La clase media presenta un crecimiento generalmente estable hasta 2017, donde experimenta un gran crecimiento relativo que se estanca decrece ligeramente posteriormente (a partir de 2019). La clase baja presenta un estancamiento genereal hasta 2015, donde experimenta un crecimiento general (que en algunos casos es superlativo), y posteriormente experimenta un decaimiento general (a partir de 2019).
 
 ```{r, echo = FALSE}
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias, Principado de", "Asturias")
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra, Comunidad Foral de", "Navarra")
+
+dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia, Región de", "Murcia")
+
+
 outlier_data <- dim_all %>%
   group_by(Anio, Cluster) %>%
   mutate(
@@ -435,17 +441,11 @@ print(plot)
 
 ```
 
-## Anexo {#sec-anexo}
-
-### Matriz de correlación de Spearman entre dimensiones por CCAA
 
 ```{r, include=FALSE}
-
-# Obtener lista de CCAA únicas
+# Matriz de correlación de Spearman entre dimensiones por CCAA
 ccaa_list <- unique(data$CCAA)
 
-# Crear un bucle para calcular y guardar las matrices de correlación
-  # Filtrar los datos para la CCAA actual
 for (ccaa in ccaa_list){
   ccaa_data <- data %>%
     filter(CCAA == ccaa)
@@ -455,7 +455,7 @@ for (ccaa in ccaa_list){
     select(Anio, Dim, Valor) %>%
     spread(key = Dim, value = Valor)
   
-  # Calcular la matriz de correlación
+  # matriz de correlación
   cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method="spearman")
   
   # Crear el gráfico de la matriz de correlación
@@ -470,7 +470,6 @@ for (ccaa in ccaa_list){
                      tl.srt = 45)
 
   
-  # Mostrar un mensaje de progreso
   print(plot)
 }
 ```
