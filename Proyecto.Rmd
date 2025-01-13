@@ -313,7 +313,16 @@ plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "",
 
 ```
 
-COMENTAR ALGO
+En el dendograma se puede observar la separación de las comunidades autonomas en tres clases.
+Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
+
+Clase alta: Aragón, Principado de Asturias, Cantabria, Comunidad Foral de Navarra, País Vasco, y La Rioja.
+Clase media: Illes Balears, Castilla - La Mancha, Castilla y León, Cataluña, Comunitat Valenciana, Extremadura, Comunidad de Madrid, Melilla, y Región de Murcia.
+Clase baja: Andalucía, Canarias, Ceuta, Galicia.
+
+Vemos que en el caso de la clase alta tenemos una subagrupación la cuál distingue la Comunidad Foral de Navarra del resto, por la tanto podemos esperar que en el análisis posterior de la clase alta la Comunidad Foral de Navarra sea la que más difiera del comportamiento general del grupo.
+En el caso de la clase media, tenemos dos subagrupaciones que contienen cuatro y cinco comunidades autónomas, por lo que no cabría esperar comportamientos fuera de la generalidad del grupo.
+Finalmente, para la clase baja sucede lo mismo que para la clase alta, en este caso Ceuta es la comunidad que más difiere de su clase.
 ```{r,echo=FALSE, warning=FALSE}
 
 grupos <- cutree(cluster_jerarquico, k = 3)
@@ -379,12 +388,6 @@ Cluster 2: Valor_Global = 0.16330·Año - 228.33700, multiple R-squared = 0.2886
 Cluster 3: Valor_Global = 0.1455·Año - 195.3640, multiple R-squared = 0.2791, p-value = 7.234e-06.
 
 Asimismo, se puede apreciar en la gráfica que las tres agrupaciones presentan una tendencia lineal general creciente y muy similar entre ellas. Sin embargo, cabe destacar que, si bien la mayoría de las comunidades autónomas han experimentado un aumento de su índice de calidad de vida con poca variación, hay alguna comunidad autónoma que sí presenta grandes variaciones alrededor de su tendencia a lo largo del tiempo. Además, notamos que, a lo largo del tiempo, a penas hay solapamiento entre las agrupaciones, excepto en el último lustro. Este solapamiento cesa en el último año registrado.
-
-Tras obtener las agrupaciones, notamos que las comunidades autónomas que forman cada clase son:
-
-Clase alta: Aragón, Principado de Asturias, Cantabria, Comunidad Foral de Navarra, País Vasco, y La Rioja.
-Clase media: Illes Balears, Castilla - La Mancha, Castilla y León, Cataluña, Comunitat Valenciana, Extremadura, Comunidad de Madrid, Melilla, y Región de Murcia.
-Clase baja: Andalucía, Canarias, Ceuta, Galicia.
 
 En la gráfica, se puede observar la recta de regresión ajustada a cada agrupación. Los dos coeficientes de cada recta son significativos a nivel $\alpha = 0.05$. Hay evidencia estadística a favor de la hipótesis sobre la tendencia lineal y creciente en los índices de las tres agrupaciones. Además, las pendientes de las rectas son muy similares. Por otro lado, la diferencia de altura entre las rectas de la clase alta y de la media es muy similar a la diferencia de altura entre las rectas de la clase media y de la baja. El valor de esta diferencia es de aproximadamente $3$ puntos, i.e., hay una clara diferencia entre las clases.
 
