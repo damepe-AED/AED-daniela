@@ -536,7 +536,9 @@ heatmap(as.matrix(heatmap_data[, -1]))
 ```
 
 ## Conclusiones
+Tras realizar el análisis de los datos, en todos los apartados hemos obtenido que la comunidad que destaca con un mayor índice es Navarra y en contraposición la de un índice más bajo ha sido Ceuta.
 
+Tras realizar la división de las CCAA en tres clases según el nivel de vida, hemos obtenido que de las 19 comunidades autónomas únicamente 4 de ellas pertenecen a la clase baja (alrededor del 21%), 9 pertenecen a la clase media (47%) y 6 a la clase alta (32%). Por tanto, podemos decir que en general la calidad de vida en España es mayoritariamente media-alta.
 
 
 ## Anexo
