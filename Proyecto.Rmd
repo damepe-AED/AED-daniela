@@ -3,8 +3,8 @@ title: 'Proyecto AED: Análisis de la Calidad de Vida en España'
 author: "Daniela Meriño, Víctor Mateu, Antonio Nova"
 date: "2024-12-31"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ## Introducción
@@ -107,7 +107,7 @@ El análisis de datos es un proceso fundamental para extraer información releva
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
 En primer lugar, vamos a analizar la relación de las diferentes dimensiones para cada comunidad autónoma. Esto se realiza calculando la matriz de correlación, a partir del método de Spearman, esta indicará una medida de cuán asociadas están las dimensiones.
-En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comunidad Valenciana, pero esta se realizó para todas las comunidades, se pueden ver en el Anexo, al final del documento.
+En la siguiente gráfica vemos un ejemplo de matriz de correlación para la Comunidad Valenciana, pero esta se realizó para todas las comunidades.
 
 
 ```{r, echo=FALSE,fig.width=5, fig.height=5}
@@ -589,14 +589,14 @@ En la gráfica superior podemos ver la distribución geográfica de las clases s
 
 Con todo esto, en este trabajo hemos explorado la calidad de vida en España desde un enfoque multidimensional, utilizando datos estructurados por comunidad autónoma y año. A través de técnicas como el análisis de correlación, hemos identificado relaciones clave entre dimensiones como condiciones materiales, trabajo y educación, que forman el núcleo del bienestar socioeconómico. También hemos aplicado métodos de agrupamiento, como clústeres jerárquicos, para clasificar las comunidades autónomas en clases alta, media y baja, lo que nos ha permitido simplificar el análisis sin perder representatividad de los datos. Estas clasificaciones han facilitado el estudio de tendencias o eventos como la crisis económica de 2008 y la recuperación posterior Finalmente, mediante visualizaciones como histogramas, boxplots, hemos destacado tanto la evolución general de la calidad de vida como las desigualdades persistentes entre las comunidades. Estos resultados proporcionan nos permiten comprender el bienestar de cada comunidad de España.
 
-## Anexo
+
 ```{r, include=FALSE}
 # Obtener lista de CCAA únicas sin la Comunidad Valenciana
 ccaa_list <- unique(data$CCAA)
 ccaa_list[-10] # Quitamos la Comunidad Valenciana
 ```
 
-```{r, inlude=FALSE}
+```{r, include=FALSE}
 # Nombres reales de las dimensiones
 dim_names <- c(
   "Condiciones Materiales de Vida",
