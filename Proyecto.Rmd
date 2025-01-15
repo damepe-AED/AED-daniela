@@ -535,3 +535,66 @@ heatmap(as.matrix(heatmap_data[, -1]))
 
 ```
 
+## Conclusiones
+
+
+
+## Anexo
+```{r, include=FALSE}
+# Obtener lista de CCAA únicas sin la Comunidad Valenciana
+ccaa_list <- unique(data$CCAA)
+ccaa_list[-10] # Quitamos la Comunidad Valenciana
+```
+
+```{r, echo=FALSE,fig.width=5, fig.height=5}
+# Nombres reales de las dimensiones
+dim_names <- c(
+  "Condiciones Materiales de Vida",
+  "Trabajo",
+  "Salud",
+  "Educación",
+  "Ocio y Relaciones Sociales",
+  "Seguridad Física y Personal",
+  "Gobernanza y Derechos Básicos",
+  "Entorno y Medioambiente",
+  "Experiencia General de la Vida"
+)
+
+par(mfrow = c(5, 4)) 
+for (ccaa in ccaa_list) {
+  # Crear un bucle para calcular y guardar las matrices de correlación
+  # Filtrar los datos para la CCAA actual
+  ccaa_data <- data %>%
+    filter(CCAA == ccaa)
+  
+  # Reorganizar los datos en formato ancho (dimensiones como columnas)
+  ccaa_wide <- ccaa_data %>%
+    select(Anio, Dim, Valor) %>%
+    spread(key = Dim, value = Valor)
+  
+  # Calcular la matriz de correlación
+  cor_matrix <- cor(ccaa_wide %>% select(-Anio), use = "complete.obs", method = "spearman")
+  
+  # Asignar los nombres reales a las filas y columnas de la matriz de correlación
+  colnames(cor_matrix) <- dim_names
+  rownames(cor_matrix) <- dim_names
+  
+  # Crear el gráfico de la matriz de correlación
+  plot <- ggcorrplot(cor_matrix, 
+                     method = "circle", 
+                     type = "lower",
+                     lab = TRUE, 
+                     lab_size = 3, 
+                     colors = c("red", "white", "blue"),
+                     title = paste("Matriz de Correlación -", ccaa),
+                     tl.cex = 7, 
+                     tl.srt = 45)+
+    theme(
+            plot.title = element_text(size = 10, face = "bold")  # Tamaño y estilo del título
+          )
+  
+  # Mostrar el gráfico
+  #print(plot)
+}
+par(mfrow = c(5, 4)) 
+```
