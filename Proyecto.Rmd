@@ -93,7 +93,7 @@ write.csv(data_tidy, "Datos_Tidy.csv", row.names = FALSE)
 
 Una vez tenemos una idea básica sobre el dataset que vamos a analizar, nos centraremos en la importación y ordenación de este. 
 
-El fichero descargardo a través del INE se obtuvo en formato .xlsx, por lo que la importación se tuvo que realizar a través de la función _read_excel_ de la librería _readxl_. Se creo un código en R de manera que cumpla las conciones de un conjunto de datos considerado _tidy_. Esto requiere que cada variable está representada en una columna, cada observación de una variable está en una fila distinta, la primera fila incluye los nombres de las variables y los nombres deben ser representativos de las variables que almacenan. 
+El fichero descargardo a través del INE se obtuvo en formato .xlsx, por lo que la importación se tuvo que realizar a través de la función _read_excel_ de la librería _readxl_. Se creo un código en R de manera que cumpla las conciones de un conjunto de datos considerado _tidy_. Esto requiere que cada variable está representada en una columna, cada observación de una variable está en una fila distinta, la primera fila incluye los nombres de las variables y los nombres deben ser representativos de las variables que almacenan. Por tanto, así es como finalmente quería nuestro conjunto de datos, donde tenemos como variables CCAA (Comunidad Autónoma), Año, Dim y Valor y en las filas las observaciones.
 
 ```{r, echo=FALSE}
 data <- read.csv("Datos_Tidy.csv")
@@ -102,7 +102,7 @@ head(data)
 
 ## Análisis de los datos
 
-El análisis de datos es un proceso fundamental para extraer información relevante, identificar patrones y apoyar la toma de decisiones basada en evidencia. En este caso, los datos proporcionan información multidimensional que permite explorar la calidad de vida en diferentes comunidades autónomas a lo largo del tiempo. Este análisis combina técnicas descriptivas, como visualizaciones y resúmenes estadísticos, con enfoques más avanzados, como modelos estadísticos y exploraciones multivariantes. 
+El análisis de datos es un proceso fundamental para extraer información relevante, identificar patrones y apoyar la toma de decisiones basada en evidencia. En este caso, los datos proporcionan información multidimensional que permite explorar la calidad de vida en diferentes comunidades autónomas a lo largo del tiempo. Este análisis combina técnicas descriptivas, como visualizaciones y estadísticos.
 
 En primer lugar, notamos que no hay valores faltantes en el conjunto de datos, sin embargo sí se observó que ciertos valores para diferentes dimensiones se repetían durante varios años. Investigando esto se observó que no todos los indicadores están disponibles todos los años. Por ejemplo, el caso más extremo es el de la dimensión Gobernanza y Derechos Básicos para el que solo hay datos en el año 2013 y, parcialmente para 2022. Los valores para los otros años, que ya venían en el conjunto de datos descargados del INE, simplemente fueron repetidos el resto de años posteriores a la nueva adquisición de datos en 2023. También se puede observar la imputación de estos valores para las dimensiones Ocio y relaciones sociales y Experiencia general de la vida.
 
@@ -462,7 +462,7 @@ Habiendo observado estos valores extremos, volvemos a apreciar como la Comunidad
 
 
 ```{r, include =FALSE}
-#este chunk no sirve era para ver si en las diferentes dimensiones tambien se cumplen los clusteres que se cumplian para el valor global
+#este chunk no sirve era para ver si en las diferentes dimensiones tambien se cumplen los clusteres que se cumplian para el valor global, pero no es así, así que no sirve
 
 clases <- dim_all %>%
   select(CCAA, Cluster) %>%
@@ -541,7 +541,7 @@ Tras realizar el análisis de los datos, en todos los apartados hemos obtenido q
 
 La división de las CCAA según el nivel de vida diferencia las CCAA en tres clases. Hemos obtenido que de las 19 comunidades autónomas únicamente 4 de ellas pertenecen a la clase baja (alrededor del 21%), 9 pertenecen a la clase media (47%) y 6 a la clase alta (32%). Por tanto, podemos decir que en general la calidad de vida en España es mayoritariamente media-alta.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
 # Obtener los datos del mapa de España
 spain_map <- ne_states(country = "Spain", returnclass = "sf")
 
@@ -558,8 +558,8 @@ spain_map <- spain_map %>%
 
 spain_map <- spain_map %>%
   mutate(color = case_when(
-    clase == "Alta" ~ "blue",   # Clase alta en azul
-    clase == "Media" ~ "red",   # Clase media en rojo
+    clase == "Alta" ~ "red",   # Clase alta en azul
+    clase == "Media" ~ "blue",   # Clase media en rojo
     clase == "Baja" ~ "green",  # Clase baja en verde
     TRUE ~ "gray"               # Otro en gris, por si acaso
   ))
@@ -568,9 +568,9 @@ ggplot(data = spain_map) +
   geom_sf(aes(fill = clase)) +
   scale_fill_manual(
     values = c(
-      "Alta" = "blue",   # Clase alta en azul
-      "Media" = "red",   # Clase media en rojo
-      "Baja" = "green"   # Clase baja en verde
+      "Alta" = "red",   # Clase alta en azul
+      "Media" = "skyblue",   # Clase media en rojo
+      "Baja" = "lightgreen"   # Clase baja en verde
     ),
     name = "Clase Social",  # Título de la leyenda
     labels = c(
@@ -586,6 +586,9 @@ ggplot(data = spain_map) +
 ```
 En la gráfica superior podemos ver la distribución geográfica de las clases sociales en España. Podemos ver que la distribución es prácticamente homogénea. La clase alta se distribuye en el norte de España, excepto en Cataluña y Galicia. La clase media reside alrededor del centro de la península y la clase baja se ubica en el sur de la península, las Islas Canarias y Galicia. Este mapa indica que la calidad de vida aumenta cuanto más al norte de España nos ubiquemos.
 
+
+Con todo esto, en este trabajo hemos explorado la calidad de vida en España desde un enfoque multidimensional, utilizando datos estructurados por comunidad autónoma y año. A través de técnicas como el análisis de correlación, hemos identificado relaciones clave entre dimensiones como condiciones materiales, trabajo y educación, que forman el núcleo del bienestar socioeconómico. También hemos aplicado métodos de agrupamiento, como clústeres jerárquicos, para clasificar las comunidades autónomas en clases alta, media y baja, lo que nos ha permitido simplificar el análisis sin perder representatividad de los datos. Estas clasificaciones han facilitado el estudio de tendencias o eventos como la crisis económica de 2008 y la recuperación posterior Finalmente, mediante visualizaciones como histogramas, boxplots, hemos destacado tanto la evolución general de la calidad de vida como las desigualdades persistentes entre las comunidades. Estos resultados proporcionan nos permiten comprender el bienestar de cada comunidad de España.
+
 ## Anexo
 ```{r, include=FALSE}
 # Obtener lista de CCAA únicas sin la Comunidad Valenciana
@@ -593,7 +596,7 @@ ccaa_list <- unique(data$CCAA)
 ccaa_list[-10] # Quitamos la Comunidad Valenciana
 ```
 
-```{r, echo=FALSE,fig.width=5, fig.height=5}
+```{r, echo=FALSE}
 # Nombres reales de las dimensiones
 dim_names <- c(
   "Condiciones Materiales de Vida",
@@ -641,7 +644,7 @@ for (ccaa in ccaa_list) {
           )
   
   # Mostrar el gráfico
-  #print(plot)
+  print(plot)
 }
-par(mfrow = c(5, 4)) 
+
 ```
