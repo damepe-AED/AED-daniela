@@ -299,19 +299,27 @@ Otro factor que llama la atención en los histogramas es que entre 2018 y 2019 l
 Debido a esto, clasificaremos las comunidades autónomas en clústeres que representen tres niveles: clase baja, media y alta, según su calidad de vida. Esto nos permitirá trabajar con menos datos de forma más manejable, conservando la gran parte de la información.
 
 ```{r, echo = FALSE, warning=FALSE}
+# Seleccionamos el dataset con las variables con las que queremos trabajar.
 dim_all <- data_reducido
 
+# Seleccionamos las columnas CCAA, Anio y Valor_Global y las reorganizamos 
+# en un formato ancho, con los valores de 'Anio' como nombres de columnas
+# y los valores de 'Valor_Global' como contenido de las nuevas columnas.
 mat_dim <- dim_all %>%
   select(CCAA, Anio, Valor_Global) %>%
   pivot_wider(names_from = Anio, values_from = Valor_Global) %>%
+  # Establecemos la columna CCAA como nombres de las filas para el dataframe.
   column_to_rownames("CCAA")
 
+# Calculamos la matriz de distancias entre las CCAA usando la distancia euclídea.
 distancia <- dist(mat_dim, method = "euclidean")
 
+# Realizamos un clústering jerárquico con la matriz de distancias calculada
+# usando el método 'ward.D2' para minimizar la varianza intra-clúster.
 cluster_jerarquico <- hclust(distancia, method = "ward.D2")
 
+# Generamos un dendrograma para visualizar el clustering jerárquico.
 plot(cluster_jerarquico, main = "Clustering Jerárquico de las CCAA", xlab = "", ylab = "Altura")
-
 ```
 
 En el dendograma se puede observar la separación de las comunidades autonomas en tres clases.
@@ -324,16 +332,20 @@ Clase baja: Andalucía, Canarias, Ceuta, Galicia.
 Vemos que en el caso de la clase alta tenemos una subagrupación la cuál distingue la Comunidad Foral de Navarra del resto, por la tanto podemos esperar que en el análisis posterior de la clase alta la Comunidad Foral de Navarra sea la que más difiera del comportamiento general del grupo.
 En el caso de la clase media, tenemos dos subagrupaciones que contienen cuatro y cinco comunidades autónomas, por lo que no cabría esperar comportamientos fuera de la generalidad del grupo.
 Finalmente, para la clase baja sucede lo mismo que para la clase alta, en este caso Ceuta es la comunidad que más difiere de su clase.
-```{r,echo=FALSE, warning=FALSE, message=FALSE}
 
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+# Nos quedamos con 3 clústeres finales y obtenemos el índice de grupo al que pertenece cada CCAA.
 grupos <- cutree(cluster_jerarquico, k = 3)
 
+# Creamos un dataset con las CCAA y la información de pertenencia de los clústeres y la incorporamos al dataset original utilizando CCAA como clave.
 dim_all <- dim_all %>%
   left_join(data.frame(CCAA = rownames(mat_dim), Cluster = grupos), by = "CCAA")
 
+# Ordenamos el dataset por el número de clúster y luego alfabéticamente por CCAA.
 dim_all <- dim_all %>%
   arrange(Cluster, CCAA)
 
+# Renombramos los clústeres.
 dim_all <- dim_all %>%
   mutate(Cluster = case_when(
     Cluster == 1 ~ "Clase baja",
@@ -342,10 +354,11 @@ dim_all <- dim_all %>%
     TRUE ~ as.character(Cluster)
   ))
 
+# Creamos la gráfica de los clústeres.
 plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor_Global, color = factor(Cluster), group = CCAA)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_smooth(
+  geom_smooth( # Recta de regresión de cada clúster.
     aes(group = Cluster),
     method = "lm",
     se = FALSE,
@@ -361,27 +374,37 @@ plot_cluster <- ggplot(dim_all, aes(x = Anio, y = Valor_Global, color = factor(C
   ) +
   theme_minimal()
 
+# Mostrar la gráfica.
 print(plot_cluster)
 
+# Filtrar el dataset por clúster.
 cluster1 <- dim_all %>% filter(Cluster == "Clase alta")
 cluster2 <- dim_all %>% filter(Cluster == "Clase media")
 cluster3 <- dim_all %>% filter(Cluster == "Clase baja")
 
+# Extrae las CCAA que componen cada clúster.
 clasebaja <- unique(cluster1 %>% select(CCAA))
 clasemedia <- unique(cluster2 %>% select(CCAA))
 clasealta <- unique(cluster3 %>% select(CCAA))
 ```
+
 ```{r, include=FALSE}
+# Modelo lineal para el cluster 1 ("Clase alta").
 modelo_cluster1 <- lm(Valor_Global ~ Anio, data = cluster1)
 cat("Cluster 1:")
 summary(modelo_cluster1)
+
+# Modelo lineal para el cluster 2 ("Clase media").
 modelo_cluster2 <- lm(Valor_Global ~ Anio, data = cluster2)
 cat("Cluster 2:")
 summary(modelo_cluster2)
+
+# Modelo lineal para el cluster 3 ("Clase baja").
 modelo_cluster3 <- lm(Valor_Global ~ Anio, data = cluster3)
 cat("Cluster 3:")
 summary(modelo_cluster3)
 ```
+
 Cluster 1: Valor_Global = 0.1130·Año - 124.0787, multiple R-squared = 0.2073, p-value = 3.14e-06.
 
 Cluster 2: Valor_Global = 0.1633·Año - 228.3370, multiple R-squared = 0.2886, p-value = 3.88e-12.
@@ -395,27 +418,28 @@ En la gráfica, se puede observar la recta de regresión ajustada a cada agrupac
 Finalmente, notamos que a penas hay solapamiento entre las agrupaciones a lo largo del tiempo, excepto en el último lustro. Este solapamiento cesa en el último año registrado. La clase alta presenta un crecimiento estable a lo largo del tiempo. La clase media presenta un crecimiento generalmente estable hasta 2017, donde experimenta un gran crecimiento relativo que se estanca decrece ligeramente posteriormente (a partir de 2019). La clase baja presenta un estancamiento genereal hasta 2015, donde experimenta un crecimiento general (que en algunos casos es superlativo), y posteriormente experimenta un decaimiento general (a partir de 2019).
 
 ```{r, echo = FALSE}
+# Simplificamos los nombres de algunas de las CCAA para facilitar su análisis.
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias, Principado de", "Asturias")
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra, Comunidad Foral de", "Navarra")
-
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia, Región de", "Murcia")
 
-
+# Creamos un dataset que contenga los datos clasificados como outlier, o no, y los estadísticos que se han usado para su clasificación.
 outlier_data <- dim_all %>%
-  group_by(Anio, Cluster) %>%
+  group_by(Anio, Cluster) %>% # Agrupamos los datos por año y por clúster.
   mutate(
     Q1 = quantile(Valor_Global, 0.25),
     Q3 = quantile(Valor_Global, 0.75),
     IQR = Q3 - Q1,
     Lower = Q1 - 1.5 * IQR,
     Upper = Q3 + 1.5 * IQR,
-    IsOutlier = Valor_Global < Lower | Valor_Global > Upper
+    IsOutlier = Valor_Global < Lower | Valor_Global > Upper # Identificamos los outliers utilizando el IQR.
   ) %>%
   ungroup()
 
+# Creamos una gráfica de boxplots que incluye outliers etiquetados.
 plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Global, fill = Cluster)) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_point(
+  geom_point( # Añadimos los outliers como puntos.
     data = outlier_data %>% filter(IsOutlier),
     aes(color = Cluster),
     size = 3,
@@ -425,7 +449,7 @@ plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Gl
     data = outlier_data %>% filter(IsOutlier),
     aes(label = CCAA),
     position = position_jitter(width = 0.2, height = 0),
-    vjust = -0.5,
+    vjust = -0.5, # Nota: esta línea ajusta la posición vertical del texto.
     size = 3
   ) +
   labs(
@@ -437,17 +461,16 @@ plot_boxplot_outliers <- ggplot(outlier_data, aes(x = factor(Anio), y = Valor_Gl
   ) +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 45, hjust = 1) # Nota: esta línea gira los nombres de los años en el eje x.
   )
 
+# Mostramos la gráfica.
 print(plot_boxplot_outliers)
 
+# Restauramos los nombres originales de algunas de las CCAA en el dataset.
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Asturias", "Asturias, Principado de")
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Navarra", "Navarra, Comunidad Foral de")
-
 dim_all$CCAA <- replace(dim_all$CCAA, dim_all$CCAA == "Murcia","Murcia, Región de")
-
-
 ```
 
 Observando la gráfica anterior, observamos que hay algunos valores extremos a lo largo del tiempo presentes en las agrupaciones. A través de las etiquetas asociadas a cada valor extremo, que identifican a qué comunidad o ciudad autónoma pertenece cada uno, verificamos algunas observaciones previas, y además logramos divisar nuevas observaciones.
