@@ -574,16 +574,17 @@ ggplot(data = spain_map) +
     ),
     name = "Clase Social",  # Título de la leyenda
     labels = c(
-      "Alta" = "Clase Alta",
-      "Media" = "Clase Media",
-      "Baja" = "Clase Baja"
+      "Alta" = "Clase alta",
+      "Media" = "Clase media",
+      "Baja" = "Clase baja"
     )
   ) +
   theme_minimal() +
   labs(
-    title = "Mapa de España según Clases Sociales"
+    title = "Distribución geográfica de las clases sociales"
   )
 ```
+En la gráfica superior podemos ver la distribución geográfica de las clases sociales en España. Podemos ver que la distribución es prácticamente homogénea. La clase alta se distribuye en el norte de España, excepto en Cataluña y Galicia. La clase media reside alrededor del centro de la península y la clase baja se ubica en el sur de la península, las Islas Canarias y Galicia. Este mapa indica que la calidad de vida aumenta cuanto más al norte de España nos ubiquemos.
 
 ## Anexo
 ```{r, include=FALSE}
