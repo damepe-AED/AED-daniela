@@ -38,6 +38,7 @@ library(gridExtra)
 library(factoextra)
 library(ggrepel)
 library(ggcorrplot)
+library(rnaturalearth)
 ```
 
 ## Importación y Ordenación de los datos 
@@ -540,12 +541,7 @@ Tras realizar el análisis de los datos, en todos los apartados hemos obtenido q
 
 La división de las CCAA según el nivel de vida diferencia las CCAA en tres clases. Hemos obtenido que de las 19 comunidades autónomas únicamente 4 de ellas pertenecen a la clase baja (alrededor del 21%), 9 pertenecen a la clase media (47%) y 6 a la clase alta (32%). Por tanto, podemos decir que en general la calidad de vida en España es mayoritariamente media-alta.
 
-```{r}
-library(sf)
-library(rnaturalearth)
-library(ggplot2)
-library(dplyr)
-
+```{r, echo = FALSE}
 # Obtener los datos del mapa de España
 spain_map <- ne_states(country = "Spain", returnclass = "sf")
 
