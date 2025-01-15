@@ -596,7 +596,7 @@ ccaa_list <- unique(data$CCAA)
 ccaa_list[-10] # Quitamos la Comunidad Valenciana
 ```
 
-```{r, echo=FALSE}
+```{r, inlude=FALSE}
 # Nombres reales de las dimensiones
 dim_names <- c(
   "Condiciones Materiales de Vida",
