@@ -538,8 +538,56 @@ heatmap(as.matrix(heatmap_data[, -1]))
 ## Conclusiones
 Tras realizar el análisis de los datos, en todos los apartados hemos obtenido que la comunidad que destaca con un mayor índice es Navarra y en contraposición la de un índice más bajo ha sido Ceuta.
 
-Tras realizar la división de las CCAA en tres clases según el nivel de vida, hemos obtenido que de las 19 comunidades autónomas únicamente 4 de ellas pertenecen a la clase baja (alrededor del 21%), 9 pertenecen a la clase media (47%) y 6 a la clase alta (32%). Por tanto, podemos decir que en general la calidad de vida en España es mayoritariamente media-alta.
+La división de las CCAA según el nivel de vida diferencia las CCAA en tres clases. Hemos obtenido que de las 19 comunidades autónomas únicamente 4 de ellas pertenecen a la clase baja (alrededor del 21%), 9 pertenecen a la clase media (47%) y 6 a la clase alta (32%). Por tanto, podemos decir que en general la calidad de vida en España es mayoritariamente media-alta.
 
+```{r}
+library(sf)
+library(rnaturalearth)
+library(ggplot2)
+library(dplyr)
+
+# Obtener los datos del mapa de España
+spain_map <- ne_states(country = "Spain", returnclass = "sf")
+
+spain_map <- spain_map %>%
+  mutate(clase = case_when(
+    region %in% c("Aragón", "Asturias", "Cantabria",
+                  "Foral de Navarra", "País Vasco", "La Rioja") ~ "Alta",
+    region %in% c("Islas Baleares", "Castilla-La Mancha", "Castilla y León", 
+                  "Cataluña", "Valenciana", "Extremadura", 
+                  "Madrid", "Melilla", "Murcia") ~ "Media",
+    region %in% c("Andalucía", "Canary Is.", "Ceuta", "Galicia") ~ "Baja",
+    TRUE ~ "Otro"  # Por si hay comunidades no listadas
+  ))
+
+spain_map <- spain_map %>%
+  mutate(color = case_when(
+    clase == "Alta" ~ "blue",   # Clase alta en azul
+    clase == "Media" ~ "red",   # Clase media en rojo
+    clase == "Baja" ~ "green",  # Clase baja en verde
+    TRUE ~ "gray"               # Otro en gris, por si acaso
+  ))
+# Crear el mapa
+ggplot(data = spain_map) +
+  geom_sf(aes(fill = clase)) +
+  scale_fill_manual(
+    values = c(
+      "Alta" = "blue",   # Clase alta en azul
+      "Media" = "red",   # Clase media en rojo
+      "Baja" = "green"   # Clase baja en verde
+    ),
+    name = "Clase Social",  # Título de la leyenda
+    labels = c(
+      "Alta" = "Clase Alta",
+      "Media" = "Clase Media",
+      "Baja" = "Clase Baja"
+    )
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Mapa de España según Clases Sociales"
+  )
+```
 
 ## Anexo
 ```{r, include=FALSE}
